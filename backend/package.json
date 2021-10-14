@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack",
-    "start": "cd ./build/ && node index.js"
+    "start": "webpack && cd ./build/ && node index.js"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +14,7 @@
   "dependencies": {
     "@types/node": "^16.7.13",
     "express": "^4.17.1",
+    "express-ws": "^5.0.2",
     "ts-loader": "^9.2.5",
     "webpack-node-externals": "^3.0.0"
   },
