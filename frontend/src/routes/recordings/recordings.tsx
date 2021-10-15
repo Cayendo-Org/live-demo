@@ -2,6 +2,7 @@ import { debugPort } from "process";
 import localforage from "localforage";
 import { FunctionComponent } from "react";
 import { DataBase } from "../../database/database";
+import { SiteNav } from "../../components/sitenav";
 
 interface Props {}
 const Recordings: FunctionComponent<Props> = ({}) => {
@@ -37,6 +38,7 @@ const Recordings: FunctionComponent<Props> = ({}) => {
   if (localforage.supports(localforage.INDEXEDDB)) {
     return (
       <div>
+      <SiteNav></SiteNav>
         <button onClick={loadVideos}>Get Videos</button>
         <button
           onClick={() => {
@@ -59,10 +61,11 @@ const Recordings: FunctionComponent<Props> = ({}) => {
       "Your browser doesn't support a stable version of IndexedDB. This feature will not be available."
     );
     return (
-      <div>
-        Your browser doesn't not support this feature, recordings are not
-        available.
-      </div>
+      <SiteNav></SiteNav>
+      // <div>
+      //   Your browser doesn't not support this feature, recordings are not
+      //   available.
+      // </div>
     );
   }
 };

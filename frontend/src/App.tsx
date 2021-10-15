@@ -3,8 +3,10 @@ import logo from "./logo.svg";
 import "./App.css";
 import { Route, Switch, BrowserRouter as Router } from "react-router-dom";
 import Home from "./routes/home/home";
-import Start from "./routes/home/start";
+import Start from "./routes/cards/start";
 import Recordings from "./routes/recordings/recordings";
+import Join from "./routes/cards/join";
+import SessionEnd from "./routes/cards/session-end";
 
 function App() {
   return (
@@ -17,7 +19,10 @@ function App() {
           <Recordings></Recordings>
         </Route>
         <Route path="/join">
-          <Start></Start>
+          <Join></Join>
+        </Route>
+        <Route path="/session-end">
+          <SessionEnd></SessionEnd>
         </Route>
         <Route path="/">
           <Home></Home>
