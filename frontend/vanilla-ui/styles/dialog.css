@@ -1,0 +1,25 @@
+.dialog {
+    margin: 50px auto;
+    background-color: var(--mid-grey);
+    border-radius: 20px;
+    padding: 40px 24px;
+    max-width: 380px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 30px;
+}
+
+.dialog div {
+    width: 100%;
+}
+
+.dialog button {
+    margin-bottom: 20px;
+}
+
+.dialog h3 {
+    text-align: left;
+    margin-bottom: 20px;
+}

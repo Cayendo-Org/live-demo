@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="styles/host.css">
     <link rel="stylesheet" href="styles/button.css">
     <link rel="stylesheet" href="styles/dialog.css">
+    <link rel="stylesheet" href="styles/join.css">
 </head>
 
 <body class="max-width">
@@ -30,13 +31,15 @@
     </nav>
 
     <div class="dialog">
-        <div>
-            <h3>Host session</h3>
+        <div class="form">
+            <h3>Join session</h3>
             <label for="display-name" class="input-label" title="Enter your email to log in">Display name</label>
             <input id="display-name" placeholder="Display name (visible to other users)" class="input"
-                onkeypress="return /[a-z]/i.test(event.key)">
+                style="margin-bottom: 20px;" onkeypress="return /[a-z]/i.test(event.key)">
+            <label for="session-code" class="input-label" title="Enter your email to log in">Session code</label>
+            <input id="session-code" placeholder="Six digit session code" class="input" pattern="\d*" maxlength="6">
         </div>
-        <button class="primary-btn">Start session</button>
+        <button class="primary-btn">Join session</button>
     </div>
 </body>
 

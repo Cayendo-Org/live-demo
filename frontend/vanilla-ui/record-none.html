@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="styles/host.css">
     <link rel="stylesheet" href="styles/button.css">
     <link rel="stylesheet" href="styles/dialog.css">
+    <link rel="stylesheet" href="styles/join.css">
+    <link rel="stylesheet" href="styles/recordings-none.css">
 </head>
 
 <body class="max-width">
@@ -30,13 +32,12 @@
     </nav>
 
     <div class="dialog">
-        <div>
-            <h3>Host session</h3>
-            <label for="display-name" class="input-label" title="Enter your email to log in">Display name</label>
-            <input id="display-name" placeholder="Display name (visible to other users)" class="input"
-                onkeypress="return /[a-z]/i.test(event.key)">
+        <div class="recording-none">
+            <img src="./assets/Wink.png" alt="">
+            <h4>So empty in here</h4>
+            <p>I wonder what that button does...</p>
         </div>
-        <button class="primary-btn">Start session</button>
+        <button class="primary-btn">Host session</button>
     </div>
 </body>
 
