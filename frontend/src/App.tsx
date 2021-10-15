@@ -4,6 +4,7 @@ import "./App.css";
 import { Route, Switch, BrowserRouter as Router } from "react-router-dom";
 import Home from "./routes/home/home";
 import Start from "./routes/home/start";
+import Recordings from "./routes/recordings/recordings";
 
 function App() {
   return (
@@ -11,6 +12,9 @@ function App() {
       <Switch>
         <Route path="/start">
           <Start></Start>
+        </Route>
+        <Route path="/recordings">
+          <Recordings></Recordings>
         </Route>
         <Route path="/join">
           <Start></Start>

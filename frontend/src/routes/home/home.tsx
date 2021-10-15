@@ -59,12 +59,17 @@ const Home: FunctionComponent<Props> = ({}) => {
     });
   };
 
+  const openRecordings = () => {
+    history.push("/recordings");
+  };
+
   return (
     <div>
       <button onClick={startDemo}>Start Demo</button>
       <button onClick={joinDemo}>Join Demo</button>
       <video playsInline autoPlay ref={videoRef}></video>
       <button onClick={pipHandler}>Open in pop up view</button>
+      <button onClick={openRecordings}>Go to Recordings</button>
     </div>
   );
 };
