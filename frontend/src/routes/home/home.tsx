@@ -1,56 +1,35 @@
-import React from "react";
-import { FunctionComponent, useState } from "react";
-import { useHistory } from "react-router";
-import { NetworkManager } from "../../network/network_manager";
+import React, { createRef, FunctionComponent, useState } from "react";
+import { Client } from "../../network/client";
+import { Server } from "../../network/server";
 
-// Media contrains
-const constraints = {
-  video: true,
-  // Uncomment to enable audio
-  // audio: true,
-};
+interface Props { }
+const Home: FunctionComponent<Props> = () => {
+  const [client, setClient] = useState(new Client());
+  const [server, setServer] = useState(new Server());
+  const [sessionId, setSessionId] = useState("");
+  const videoRef = createRef<HTMLVideoElement>();
 
-interface Props {}
-const Home: FunctionComponent<Props> = ({}) => {
-  const history = useHistory();
-  let videoRef = React.createRef<HTMLVideoElement>();
+  const temp = (event: RTCTrackEvent) => {
+    console.log("Event:", event);
+
+    let ref = document.getElementById("video") as HTMLVideoElement;
+    ref.srcObject = event.streams[0];
+    console.log("SRC:", ref.srcObject);
+  };
 
   const startDemo = () => {
-    // history.push("/start")
-    NetworkManager.instance
-      .startHost("host_name")
-      .then((sessionId: string) => {
-        console.log("Host: STARTED WITH SESSION ID", sessionId);
-      })
-      .catch((err) => {
-        console.log("Host: FAILED TO START SESSION", err);
-      });
+    server.onVideo = temp;
+
+    console.log("Starting Server...");
+    server.start().then((id) => {
+      setSessionId(id);
+      console.log(`Session Id: ${id}`);
+    });
+    console.log("Server Started");
   };
 
   const joinDemo = () => {
-    let test_session = "test_session";
-    // history.push("/join");
-    NetworkManager.instance
-      .startClient("client_name", test_session)
-      .then((sessionId: string) => {
-        console.log("Client: CONNECTED TO SESSION ID", sessionId);
-        navigator.mediaDevices
-          .getUserMedia(constraints)
-          .then((stream) => {
-            // @ts-ignore
-            videoRef.current.srcObject = stream;
-            // socket.emit("broadcaster");
-          })
-          .catch((error) => console.error(error));
-      })
-      .catch((err) => {
-        console.log(
-          "Client: FAILED TO CONNECTED TO SESSION ID",
-          test_session,
-          "WITH ERROR",
-          err
-        );
-      });
+    client.connect(sessionId).then(() => { });
   };
 
   const pipHandler = () => {
@@ -62,8 +41,9 @@ const Home: FunctionComponent<Props> = ({}) => {
   return (
     <div>
       <button onClick={startDemo}>Start Demo</button>
+      <input value={sessionId} onChange={(event) => setSessionId(event.target.value)} />
       <button onClick={joinDemo}>Join Demo</button>
-      <video playsInline autoPlay ref={videoRef}></video>
+      <video ref={videoRef} id="video"></video>
       <button onClick={pipHandler}>Open in pop up view</button>
     </div>
   );
