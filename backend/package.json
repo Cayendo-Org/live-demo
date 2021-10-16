@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack",
+    "build": "webpack && rm -rf ./build/node_modules/ && cp -rf ./node_modules/ ./build/",
+    "buildall": "npm run build && cd ../frontend/ && npm run build",
     "start": "webpack && cd ./build/ && node index.js"
   },
   "keywords": [],
