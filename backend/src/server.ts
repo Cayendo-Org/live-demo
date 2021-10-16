@@ -1,5 +1,6 @@
 import express from "express";
 import expressWs from "express-ws";
+import path from "path";
 import WebSocket from 'ws';
 import { SignallingMessage, SIGNALLING_MESSAGE_TYPE } from "./types";
 
@@ -17,12 +18,6 @@ let sessions: Record<string, Session> = {};
 const createUuid = () => {
   return String(Math.floor(Math.random() * 999999)).padStart(6, "0");
 };
-
-app.use("*", express.static("../../frontend/build"));
-
-app.listen(port, () => {
-  console.log("server started at http://localhost:" + port);
-});
 
 app.ws("/", function (ws, req) {
   ws.on("message", (rawData) => {
@@ -122,4 +117,11 @@ app.ws("/", function (ws, req) {
       delete session.clientMap[(ws as any).id];
     }
   });
+});
+
+app.use(express.static(path.join(__dirname, "../../frontend/build")));
+app.get("*", (req, res) => { res.sendFile(path.join(__dirname, "../../frontend/build/index.html")); });
+
+app.listen(port, () => {
+  console.log("server started at http://localhost:" + port);
 });

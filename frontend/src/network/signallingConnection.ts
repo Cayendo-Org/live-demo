@@ -4,7 +4,9 @@ export class SignallingConnection {
   signalingConnection: WebSocket | null = null;
 
   signalingSend<K extends SIGNALLING_MESSAGE_TYPE>(type: K, event: SignallingMessageOptions[K], id: string = "") {
-    this.signalingConnection?.send(JSON.stringify({ id: id, type: type, data: event }));
+    if (this.signalingConnection && this.signalingConnection.readyState === this.signalingConnection.OPEN) {
+      this.signalingConnection.send(JSON.stringify({ id: id, type: type, data: event }));
+    }
   }
 
   signalingConnect() {

@@ -1,8 +1,8 @@
 import { SignallingConnection } from "./signallingConnection";
-import { CONFIG, Message, MESSAGE_TYPE, ServerUser, SignallingMessage, SIGNALLING_MESSAGE_TYPE } from "./types";
+import { CONFIG, Message, MessageOptions, MESSAGE_TYPE, ServerClient, SignallingMessage, SIGNALLING_MESSAGE_TYPE } from "./types";
 
-export class Server extends SignallingConnection {
-    users: ServerUser[] = [];
+export class NetworkServer extends SignallingConnection {
+    clients: ServerClient[] = [];
     sessionCreateResolve: ((code: string) => void) | null = null;
 
     async start() {
@@ -13,33 +13,48 @@ export class Server extends SignallingConnection {
         });
     }
 
-    onVideo = (event: RTCTrackEvent) => {
-    };
+    sendMessage<K extends MESSAGE_TYPE>(type: K, data: MessageOptions[K], client: ServerClient) {
+        client.dataChannel.send(JSON.stringify({ type: type, data: data }));
+    }
 
     onSignalingMessage = async (event: MessageEvent) => {
         const data = JSON.parse(event.data);
 
         if (data.type === SIGNALLING_MESSAGE_TYPE.CONNECT) {
             const message = data as SignallingMessage<SIGNALLING_MESSAGE_TYPE.CONNECT>;
-            let pc = new RTCPeerConnection(CONFIG);
 
+            let pc = new RTCPeerConnection(CONFIG);
             let dataChannel = pc.createDataChannel("general", { negotiated: true, id: 0, });
             let candidates: RTCIceCandidate[] = [];
-            let id = "";
+            let signallingConnected = false;
+
+            // Create new client
+            let client: ServerClient = { name: "", ready: false, sources: [], pc: pc, id: String(Math.floor(Math.random() * 999999)).padStart(6, "0"), dataChannel: dataChannel };
+            this.clients.push(client);
 
             dataChannel.addEventListener("open", (event) => {
                 console.log(`Server: Con: ${pc.connectionState}, ICE: ${pc.iceConnectionState}, SIGNAL: ${pc.signalingState}}`);
 
                 pc.onicecandidate = ({ candidate }) => {
                     if (candidate) {
-                        dataChannel.send(JSON.stringify({ type: MESSAGE_TYPE.ICE, data: candidate }));
+                        this.sendMessage(MESSAGE_TYPE.ICE, { candidate: candidate }, client);
                     }
                 };
 
                 pc.onnegotiationneeded = async () => {
                     try {
                         await pc.setLocalDescription();
-                        dataChannel.send(JSON.stringify({ type: MESSAGE_TYPE.SDP, data: pc.localDescription }));
+                        if (pc.localDescription) {
+                            this.sendMessage(MESSAGE_TYPE.SOURCE_SYNC, {
+                                description: pc.localDescription,
+                                clients: this.clients.map(client => {
+                                    return {
+                                        id: client.id,
+                                        sources: client.sources.map(source => { return { type: source.type, id: source.id }; })
+                                    };
+                                }),
+                            }, client);
+                        }
                     } catch (err) {
                         console.error(err);
                     }
@@ -47,33 +62,84 @@ export class Server extends SignallingConnection {
             });
 
             dataChannel.onmessage = async (event) => {
-                let message = JSON.parse(event.data) as Message;
+                let data = JSON.parse(event.data);
 
-                if (message.type === MESSAGE_TYPE.SDP) {
+                if (data.type === MESSAGE_TYPE.SOURCE_SYNC) {
+                    const message = data as Message<MESSAGE_TYPE.SOURCE_SYNC>;
+
                     try {
-                        const description = message.data;
+                        const description = message.data.description;
 
                         console.log(`New remote SDP, Type: ${description.type}`);
+
+                        if (description.type === "offer") {
+                            // Update Sources
+                            client.sources = message.data.clients[0].sources.map(source => {
+                                let old = client.sources.find(item => item.id === source.id);
+                                return {
+                                    id: source.id,
+                                    type: source.type,
+                                    stream: old ? old.stream : null
+                                };
+                            });
+                        }
 
                         await pc.setRemoteDescription(description);
                         if (description.type === "offer") {
                             await pc.setLocalDescription();
-                            dataChannel.send(JSON.stringify({ type: MESSAGE_TYPE.SDP, data: pc.localDescription }));
+                            if (pc.localDescription) {
+                                console.log(message.data);
+
+                                this.sendMessage(MESSAGE_TYPE.SOURCE_SYNC, {
+                                    description: pc.localDescription,
+                                    clients: this.clients.map(client => {
+                                        return {
+                                            id: client.id,
+                                            sources: client.sources.map(source => { return { type: source.type, id: source.id }; })
+                                        };
+                                    }),
+                                }, client);
+                            }
                         }
                     } catch (err) {
                         console.error(err);
                     }
-                } else if (message.type === MESSAGE_TYPE.ICE) {
+                } else if (data.type === MESSAGE_TYPE.ICE) {
+                    const message = data as Message<MESSAGE_TYPE.ICE>;
+
                     try {
-                        await pc.addIceCandidate(message.data);
+                        await pc.addIceCandidate(message.data.candidate);
                     } catch (err) {
                         throw err;
+                    }
+                } else if (data.type === MESSAGE_TYPE.JOIN) {
+                    client.ready = true;
+
+                    for (const client of this.clients) {
+                        if (!client.ready) continue;
+                        this.sendMessage(MESSAGE_TYPE.JOIN, { id: client.id }, client);
+                    }
+                } else if (data.type === MESSAGE_TYPE.LEAVE) {
+                    client.ready = false;
+
+                    for (const client of this.clients) {
+                        if (!client.ready) continue;
+                        this.sendMessage(MESSAGE_TYPE.LEAVE, { id: client.id }, client);
                     }
                 }
             };
 
             pc.ontrack = (event) => {
-                this.onVideo(event);
+                console.log("New Track", client);
+                let source = client.sources.find(source => source.id === event.streams[0].id);
+                if (source) {
+                    source.stream = event.streams[0];
+
+                    for (const client of this.clients) {
+                        if (!client.ready) continue;
+                        client.pc.addTrack(event.track, event.streams[0]);
+                    }
+                }
             };
 
             pc.oniceconnectionstatechange = () => {
@@ -86,39 +152,35 @@ export class Server extends SignallingConnection {
                 if (!candidate) { return; }
                 candidates.push(candidate);
 
-                if (!id) { return; }
+                if (!signallingConnected) { return; }
 
                 // Flush candidates
                 for (let i = 0; i < candidates.length; i++) {
-                    this.signalingSend(SIGNALLING_MESSAGE_TYPE.ICE, { candidate: candidates[i] }, user.id);
+                    this.signalingSend(SIGNALLING_MESSAGE_TYPE.ICE, { candidate: candidates[i] }, client.id);
                 }
                 candidates.splice(0, candidates.length);
             };
-
-            // Create new user
-            id = String(Math.floor(Math.random() * 999999)).padStart(6, "0");
-            let user = { name: "", sources: [], pc: pc, id: id, dataChannel: dataChannel };
-            this.users.push(user);
 
             // Create answer
             await pc.setRemoteDescription(message.data.description);
             await pc.setLocalDescription();
             if (!pc.localDescription) return;
 
-            this.signalingSend(SIGNALLING_MESSAGE_TYPE.CONNECT, { description: pc.localDescription, id: user.id }, message.id);
+            this.signalingSend(SIGNALLING_MESSAGE_TYPE.CONNECT, { description: pc.localDescription, id: client.id }, message.id);
+            signallingConnected = true;
 
             // Flush candidates
             for (let i = 0; i < candidates.length; i++) {
-                this.signalingSend(SIGNALLING_MESSAGE_TYPE.ICE, { candidate: candidates[i] }, user.id);
+                this.signalingSend(SIGNALLING_MESSAGE_TYPE.ICE, { candidate: candidates[i] }, client.id);
             }
             candidates.splice(0, candidates.length);
         } else if (data.type === SIGNALLING_MESSAGE_TYPE.ICE) {
             const message = data as SignallingMessage<SIGNALLING_MESSAGE_TYPE.ICE>;
 
-            for (let i = 0; i < this.users.length; i++) {
-                if (this.users[i].id === message.id) {
+            for (let i = 0; i < this.clients.length; i++) {
+                if (this.clients[i].id === message.id) {
                     console.log("ADDED");
-                    await this.users[i].pc.addIceCandidate(message.data.candidate);
+                    await this.clients[i].pc.addIceCandidate(message.data.candidate);
                     break;
                 }
             }
