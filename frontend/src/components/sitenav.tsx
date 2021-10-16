@@ -13,6 +13,9 @@ export const SiteNav: FunctionComponent = () => {
         <Link to="/session-end">
           <h5>(TEMP) session-end</h5>
         </Link>
+        <Link to="/room">
+          <h5>(TEMP) room</h5>
+        </Link>
         <Link to="/recordings">
           <h5>Recordings</h5>
         </Link>

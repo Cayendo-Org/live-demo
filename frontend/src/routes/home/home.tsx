@@ -28,7 +28,7 @@ const Home: FunctionComponent<Props> = () => {
               can deliver better recordings, faster.
             </h5>
             <Link to="/start">
-              <button>Start recording now</button>
+              <button id="hero-button">Start recording now</button>
             </Link>
           </div>
 

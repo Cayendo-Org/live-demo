@@ -3,15 +3,23 @@ import localforage from "localforage";
 import { FunctionComponent, useState } from "react";
 import { DataBase, METADATA } from "../../database/database";
 import { SiteNav } from "../../components/sitenav";
-import "./table.css";
+import "./recordings.css";
 import { ReactComponent as Svg } from "../../animations/animate.svg";
 import { Link } from "react-router-dom";
+import Wink from "../../assets/Wink.png";
 
 interface Props {}
 const Recordings: FunctionComponent<Props> = ({}) => {
   DataBase.instance.initDB();
 
-  const loadVideos = () => {
+  const loadVideos = async () => {
+    // await DataBase.instance.uploadVideo(
+    //   new Date(),
+    //   "1:15",
+    //   10024,
+    //   ["Tomasz", "Brian", "Julian"],
+    //   new Blob()
+    // );
     DataBase.instance.getAllMetaData().then((res) => {
       setRecordings(res);
     });
@@ -29,7 +37,11 @@ const Recordings: FunctionComponent<Props> = ({}) => {
     people: string[],
     mp4: Blob
   ) => {
-    DataBase.instance.uploadVideo(date, duration, size, people, mp4);
+    DataBase.instance
+      .uploadVideo(date, duration, size, people, mp4)
+      .then(() => {
+        loadVideos();
+      });
   };
 
   const getVideo = (_uuid: string) => {
@@ -60,13 +72,27 @@ const Recordings: FunctionComponent<Props> = ({}) => {
         <SiteNav></SiteNav>
         <div className="dialog">
           <div className="recording-none">
-            <img draggable="false" src="./assets/Wink.png" alt=""></img>
+            <img draggable="false" src={Wink} alt=""></img>
             <h4>So empty in here</h4>
             <p>I wonder what that button does...</p>
           </div>
           <Link to="/start">
             <button className="primary-btn">Start session</button>
           </Link>
+          <button
+            className="primary-btn"
+            onClick={() => {
+              uploadVideo(
+                new Date(),
+                "1:15",
+                10024,
+                ["Tomasz", "Brian", "Julian"],
+                new Blob()
+              );
+            }}
+          >
+            (TEMP) Upload video
+          </button>
         </div>
       </div>
     );
@@ -115,6 +141,20 @@ const Recordings: FunctionComponent<Props> = ({}) => {
             ))}
           </tbody>
         </table>
+        <button
+            className="primary-btn"
+            onClick={() => {
+              uploadVideo(
+                new Date(),
+                "1:15",
+                10024,
+                ["Tomasz", "Brian", "Julian"],
+                new Blob()
+              );
+            }}
+          >
+            (TEMP) Upload video
+          </button>
       </div>
     );
   } else {

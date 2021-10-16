@@ -20,7 +20,11 @@
   height: 100%;
 }
 
-button {
+#together {
+  margin-top: -10px;
+}
+
+#hero-button {
   max-width: 280px;
   padding: 14px 20px;
   border-radius: 50px;
@@ -30,8 +34,4 @@ button {
   font-size: 18px;
   cursor: pointer;
   margin-bottom: 100px;
-}
-
-#together {
-  margin-top: -10px;
 }

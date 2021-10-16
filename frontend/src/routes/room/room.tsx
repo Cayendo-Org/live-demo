@@ -1,8 +1,9 @@
 import { createRef, FunctionComponent, useState } from "react";
+import { SiteNav } from "../../components/sitenav";
 import { Client } from "../../network/client";
 import { Server } from "../../network/server";
 
-interface Props { }
+interface Props {}
 const Session: FunctionComponent<Props> = () => {
   const [client, setClient] = useState(new Client());
   const [server, setServer] = useState(new Server());
@@ -26,14 +27,20 @@ const Session: FunctionComponent<Props> = () => {
   };
 
   const joinServer = () => {
-    client.connect(sessionId).then(() => { });
+    client.connect(sessionId).then(() => {});
   };
-  return <div>
-    <button onClick={startServer}>Start Server</button>
-    <input value={sessionId} onChange={(event) => setSessionId(event.target.value)} />
-    <button onClick={joinServer}>Join</button>
-    <video ref={videoRef} id="video"></video>
-  </div>;
+  return (
+    <div className="max-width">
+      <SiteNav></SiteNav>
+      <button onClick={startServer}>Start Server</button>
+      <input
+        value={sessionId}
+        onChange={(event) => setSessionId(event.target.value)}
+      />
+      <button onClick={joinServer}>Join</button>
+      <video ref={videoRef} id="video"></video>
+    </div>
+  );
 };
 
 export default Session;
