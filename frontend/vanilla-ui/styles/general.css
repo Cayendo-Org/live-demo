@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+
+* {
+    font-family: 'Inter', Arial, Helvetica, sans-serif;
+}
+
+:root {
+    --blue:#3C68FF;
+    --white: #FFF;
+    --light-grey: #FDFDFD;
+    --grey: #F5F5F5;
+    --mid-grey: #F2F2F2;
+    --dark-blue:#2C2B3C;
+    --black: #000;
+}
+
+body {
+    overflow-y: scroll;
+    margin: 0;
+    padding: 12px 24px 100px 24px;
+    background-color: var(--light-grey);
+}
+
+.max-width {
+    max-width: 1920px;
+}
+
+h1 {
+    color: var(--black);
+    margin: 0;
+    font-size: 60px;
+}
+
+h2 {
+    color: var(--black);
+    margin: 0;
+    font-size: 30px;
+}
+
+h3 {
+    color: var(--black);
+    margin: 0;
+    font-size: 24px;
+}
+
+h4 {
+    color: var(--black);
+    margin: 0;
+    font-size: 18px;
+}
+
+h5 {
+    color: var(--black);
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+p {
+    color: var(--black);
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+a:link, a:visited, a:active {
+    cursor: pointer;
+    color: var(--black);
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+a:hover {
+    outline: none;
+    color: var(--dark-blue);
+}
+
+a:focus-visible {
+    outline: 2px solid var(--blue);
+}

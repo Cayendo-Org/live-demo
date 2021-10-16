@@ -1,0 +1,18 @@
+.dialog {
+    padding-top: 20px;
+}
+
+.recording-none {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.recording-none p {
+    margin-bottom: 15px;
+}
+
+.recording-none h4 {
+    margin-bottom: 5px;
+}

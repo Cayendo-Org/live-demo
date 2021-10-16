@@ -1,9 +1,12 @@
 import React from "react";
-import logo from "./logo.svg";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "./App.css";
-import { Route, Switch, BrowserRouter as Router } from "react-router-dom";
+import Join from "./routes/cards/join";
+import SessionEnd from "./routes/cards/session-end";
+import Start from "./routes/cards/start";
 import Home from "./routes/home/home";
-import Start from "./routes/home/start";
+import Recordings from "./routes/recordings/recordings";
+import Room from "./routes/room/room";
 
 function App() {
   return (
@@ -12,8 +15,17 @@ function App() {
         <Route path="/start">
           <Start></Start>
         </Route>
+        <Route path="/recordings">
+          <Recordings></Recordings>
+        </Route>
         <Route path="/join">
-          <Start></Start>
+          <Join></Join>
+        </Route>
+        <Route path="/room">
+          <Room></Room>
+        </Route>
+        <Route path="/session-end">
+          <SessionEnd></SessionEnd>
         </Route>
         <Route path="/">
           <Home></Home>

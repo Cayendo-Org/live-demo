@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Record</title>
+    <link rel="stylesheet" href="styles/navbar.css">
+    <link rel="stylesheet" href="styles/general.css">
+    <link rel="stylesheet" href="styles/host.css">
+    <link rel="stylesheet" href="styles/button.css">
+    <link rel="stylesheet" href="styles/dialog.css">
+</head>
+
+<body class="max-width">
+    <nav id="navbar">
+        <img src="assets/logo.svg" alt="Live Demo Logo">
+        <div class="nav-links">
+            <a href="#">
+                <h5>Recordings</h5>
+            </a>
+            <a href="#">
+                <h5>Join session</h5>
+            </a>
+            <a href="#">
+                <h5 class="outlined-button">Start session</h5>
+            </a>
+        </div>
+    </nav>
+
+    <div class="dialog">
+        <div>
+            <h3>Start session</h3>
+            <label for="display-name" class="input-label" title="Enter your email to log in">Display name</label>
+            <input id="display-name" placeholder="Display name (visible to other users)" class="input"
+                onkeypress="return /[a-z]/i.test(event.key)">
+        </div>
+        <button class="primary-btn">Start session</button>
+    </div>
+</body>
+
+</html>

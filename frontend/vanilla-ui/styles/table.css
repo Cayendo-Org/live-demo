@@ -1,0 +1,28 @@
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+    border-radius: 10px;
+    border-collapse: collapse;
+    overflow: hidden;
+    border: 1px solid transparent;
+}
+  
+td, th {
+    border: 1px solid transparent;
+    text-align: left;
+    padding: 8px;
+}
+  
+tr:first-child {
+    background-color: hsl(226, 100%, 62%, 0.1);
+    outline: 1px solid var(--blue)
+}
+
+tr {
+    padding: 10px;
+}
+
+tr:nth-child(even) {
+    background-color: #dddddd;
+}
