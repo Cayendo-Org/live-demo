@@ -1,5 +1,7 @@
 import { FunctionComponent } from "react";
+import { Link } from "react-router-dom";
 import { SiteNav } from "../../components/sitenav";
+import Sleepy from "../../assets/Sleepy.png";
 
 interface Props {}
 const SessionEnd: FunctionComponent<Props> = ({}) => {
@@ -8,12 +10,14 @@ const SessionEnd: FunctionComponent<Props> = ({}) => {
       <SiteNav></SiteNav>
       <div className="dialog">
         <div className="recording-none">
-            <img src="./assets/Sleepy.png" alt=""></img>
-            <h4>This session has ended</h4>
-            <p>Thank you for using Live Record.</p>
+          <img src={Sleepy} alt=""></img>
+          <h4>This session has ended</h4>
+          <p>Thank you for using Live Record.</p>
         </div>
-        <button className="primary-btn">Home page</button>
-    </div>
+        <Link to="/">
+          <button className="primary-btn">Home page</button>
+        </Link>
+      </div>
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import { FunctionComponent } from "react";
 import { SiteNav } from "../../components/sitenav";
+import './start.css';
 
 interface Props {}
 const Start: FunctionComponent<Props> = ({}) => {

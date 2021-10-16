@@ -1,5 +1,6 @@
 import { FunctionComponent } from "react";
 import { SiteNav } from "../../components/sitenav";
+import './join.css';
 
 interface Props {}
 const Join: FunctionComponent<Props> = ({}) => {
