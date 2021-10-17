@@ -170,7 +170,7 @@ export class NetworkClient extends SignallingConnection {
 
     startScreenShare = () => {
         navigator.mediaDevices.getDisplayMedia({ video: true, audio: true }).then((captureStream) => {
-            console.log("Stream:", captureStream.id);
+            console.log("Stream:", captureStream);
             let client = this.clients.find(client => client.id === this.clientId)!;
             client.sources.push({ type: SOURCE_TYPE.SCREEN_SHARE, id: captureStream.id, stream: captureStream });
             for (const track of captureStream.getTracks()) {

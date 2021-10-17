@@ -24,8 +24,8 @@ const Session: FunctionComponent<Props> = () => {
       console.log("Stream:", event.streams[0].id);
       console.log("Event:", event);
       let ref = document.getElementById("video") as HTMLVideoElement;
+      ref.autoplay = true;
       ref.srcObject = event.streams[0];
-      ref.play();
       console.log("SRC:", ref.srcObject);
     };
     client.connect(sessionId).then(() => { });
