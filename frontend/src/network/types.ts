@@ -1,13 +1,3 @@
-export const enum SOURCE_TYPE {
-    CAMERA,
-    SCREEN_SHARE
-}
-
-export interface Source {
-    type: SOURCE_TYPE;
-    stream: MediaStream;
-}
-
 export const enum SIGNALLING_MESSAGE_TYPE {
     SESSION_CREATE,
     CONNECT,
@@ -20,15 +10,16 @@ export interface SignallingMessage<T extends SIGNALLING_MESSAGE_TYPE> {
     data: SignallingMessageOptions[T];
 }
 
-export interface User {
+export interface Client {
     id: string;
     name: string;
     sources: Source[];
 }
 
-export interface ServerUser extends User {
+export interface ServerClient extends Client {
     dataChannel: RTCDataChannel;
     pc: RTCPeerConnection;
+    ready: boolean;
 }
 
 export interface SessionCreateOptions {
@@ -62,12 +53,52 @@ export const CONFIG = {
 };
 
 export const enum MESSAGE_TYPE {
-    NEW_USER,
+    JOIN,
+    LEAVE,
+    SOURCE_SYNC,
     ICE,
-    SDP,
 }
 
-export interface Message {
+export interface MessageOptions {
+    [MESSAGE_TYPE.SOURCE_SYNC]: SourceSyncOptions,
+    [MESSAGE_TYPE.ICE]: ICEOptions,
+    [MESSAGE_TYPE.JOIN]: JoinOptions,
+    [MESSAGE_TYPE.LEAVE]: LeaveOptions,
+}
+
+export interface JoinOptions {
+    id: string;
+}
+
+export interface LeaveOptions {
+    id: string;
+}
+
+export const enum SOURCE_TYPE {
+    CAMERA,
+    SCREEN_SHARE
+}
+
+export interface SourceDescription {
+    type: SOURCE_TYPE;
+    id: string;
+}
+
+export interface Source extends SourceDescription {
+    stream: MediaStream | null;
+}
+
+export interface SourceSyncOptions {
+    description: RTCSessionDescription;
+    clients: SourceSyncClient[];
+}
+
+export interface SourceSyncClient {
+    id: string;
+    sources: SourceDescription[];
+}
+
+export interface Message<T extends MESSAGE_TYPE> {
     type: MESSAGE_TYPE;
-    data: any;
+    data: MessageOptions[T];
 }
