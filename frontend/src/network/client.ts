@@ -149,7 +149,7 @@ export class NetworkClient extends SignallingConnection {
                 if (!candidate) { return; }
                 this.candidates.push(candidate);
 
-                if (this.clientId) { return; }
+                if (!this.clientId) { return; }
 
                 // Flush candidates
                 for (let i = 0; i < this.candidates.length; i++) {
@@ -169,7 +169,7 @@ export class NetworkClient extends SignallingConnection {
     };
 
     startScreenShare = () => {
-        navigator.mediaDevices.getDisplayMedia().then((captureStream) => {
+        navigator.mediaDevices.getDisplayMedia({ video: true, audio: true }).then((captureStream) => {
             console.log("Stream:", captureStream.id);
             let client = this.clients.find(client => client.id === this.clientId)!;
             client.sources.push({ type: SOURCE_TYPE.SCREEN_SHARE, id: captureStream.id, stream: captureStream });
