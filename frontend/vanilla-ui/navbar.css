@@ -24,5 +24,20 @@
 }
 
 .outlined-button:hover {
-    background-color: hsl(0, 0%, 0%, 0.05);
+    background-color: var(--grey-duo);
+}
+
+.outlined-button:focus-visible {
+    border: 1px solid transparent;
+    outline: 2px solid var(--blue);
+}
+
+@media only screen and (max-width: 495px){
+    #navbar {
+        flex-direction: column;
+    }
+
+    .nav-links {
+        gap: 20px;
+    }
 }

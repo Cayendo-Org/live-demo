@@ -6,13 +6,22 @@
 }
 
 :root {
-    --blue:#3C68FF;
-    --white: #FFF;
-    --light-grey: #FDFDFD;
-    --grey: #F5F5F5;
-    --mid-grey: #F2F2F2;
-    --dark-blue:#2C2B3C;
-    --black: #000;
+    --white: hsl(0, 0%, 100%);
+    --white-mid: hsl(0, 0%, 99%); /* light grey */
+    --white-dark: hsl(0, 0%, 96%); /* grey */
+    --white-darkest: hsl(0, 0%, 95%); /* mid-grey */
+    --dark-blue:hsl(244, 17%, 20%);
+
+    --black: hsl(0, 0%, 0%);
+    --black-opac: hsla(0, 0%, 0%, 0.8);
+
+    --grey-duo: hsl(0, 0%, 59%, 0.2);
+    --grey-quad: hsl(0, 0%, 59%, 0.4);
+    --grey-half: hsl(0, 0%, 59%, 0.5);
+
+    --blue:hsl(226, 100%, 62%);
+    --red:hsl(358, 73%, 42%);
+    --red-dark:hsl(358, 73%, 38%);
 }
 
 html {
@@ -23,13 +32,12 @@ body {
     height: 100%;
     margin: 0;
     padding: 0;
-    background-color: var(--light-grey);
+    background-color: var(--white-mid);
 }
 
 .max-width {
     overflow-y: scroll;
     max-width: 1920px;
-    padding: 12px 24px 100px 24px;
 }
 
 h1 {
@@ -74,7 +82,7 @@ a:link, a:visited, a:active {
     cursor: pointer;
     color: var(--black);
     text-decoration: none;
-    transition: all 0.2s;
+    transition: color 0.2s;
 }
 
 a:hover {
