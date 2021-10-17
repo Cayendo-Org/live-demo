@@ -2,5 +2,7 @@
   "appService.zipIgnorePattern": [
     "node_modules{,/**}",
     ".vscode{,/**}"
-  ]
+  ],
+  "appService.defaultWebAppToDeploy": "/subscriptions/ea8331cb-807c-4266-b99b-d60339f250bd/resourceGroups/DefaultResourceGroup-CCAN/providers/Microsoft.Web/sites/record-together",
+  "appService.deploySubpath": "backend\\build"
 }
