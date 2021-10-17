@@ -57,6 +57,7 @@ app.ws("/", function (ws, req) {
       if (session.server === ws) {
         // Move ws
         let socket = session.connectingClientMap[data.id];
+        if (!socket) { return; }
         delete session.connectingClientMap[data.id];
 
         session.clientMap[data.data.id] = socket;
@@ -81,7 +82,9 @@ app.ws("/", function (ws, req) {
     }
 
     if (session.server === ws) {
-      session.clientMap[data.id].send(JSON.stringify(data));
+      let socket = session.clientMap[data.id];
+      if (!socket) { return; }
+      socket.send(JSON.stringify(data));
     } else if ((ws as any).id) {
       data.id = (ws as any).id;
       session.server.send(JSON.stringify(data));

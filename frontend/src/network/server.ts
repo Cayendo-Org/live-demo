@@ -113,11 +113,26 @@ export class NetworkServer extends SignallingConnection {
                         throw err;
                     }
                 } else if (data.type === MESSAGE_TYPE.JOIN) {
+                    for (const serverClient of this.clients) {
+                        if (!serverClient.ready) continue;
+                        this.sendMessage(MESSAGE_TYPE.JOIN, { id: serverClient.id }, client);
+                    }
+
                     client.ready = true;
 
-                    for (const client of this.clients) {
-                        if (!client.ready) continue;
-                        this.sendMessage(MESSAGE_TYPE.JOIN, { id: client.id }, client);
+                    for (const serverClient of this.clients) {
+                        if (!serverClient.ready) continue;
+                        this.sendMessage(MESSAGE_TYPE.JOIN, { id: client.id }, serverClient);
+                    }
+
+                    for (const serverClient of this.clients) {
+                        if (!serverClient.ready) continue;
+                        for (const source of serverClient.sources) {
+                            if (!source.stream) continue;
+                            for (const track of source.stream.getTracks()) {
+                                client.pc.addTrack(track, source.stream);
+                            }
+                        }
                     }
                 } else if (data.type === MESSAGE_TYPE.LEAVE) {
                     client.ready = false;
