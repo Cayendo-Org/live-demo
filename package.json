@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "start": "cd backend/build/ && node index.js"
+  }
+}
