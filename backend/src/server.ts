@@ -2,7 +2,7 @@ import express from "express";
 import expressWs from "express-ws";
 import path from "path";
 import WebSocket from 'ws';
-import { CoordinatorMessage, COORDINATOR_MESSAGE_TYPE } from "./types";
+import { CoordinatorMessage, COORDINATOR_MESSAGE_TYPE } from "../../shared/types";
 
 const port = process.env.PORT || 25566;
 const { app } = expressWs(express());
@@ -16,7 +16,7 @@ export interface Session {
 let sessions: Record<string, Session> = {};
 
 const createUuid = () => {
-  return String(Math.floor(Math.random() * 999999)).padStart(6, "0");
+  return String(Math.floor(Math.random() * 999999)).padStart(5, "0");
 };
 
 app.ws("/", function (ws, req) {

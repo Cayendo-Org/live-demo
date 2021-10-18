@@ -1,4 +1,6 @@
 import { FunctionComponent, useEffect, useState } from "react";
+import { NetworkClient } from "../../../../../shared/client";
+import { Client, NETWORK_STATE, Source } from "../../../../../shared/types";
 import { ReactComponent as DrawIcon } from "../../../assets/icons/brush.svg";
 import { ReactComponent as EndCallIcon } from "../../../assets/icons/call_end.svg";
 import { ReactComponent as MessageIcon } from "../../../assets/icons/chat.svg";
@@ -7,7 +9,6 @@ import { ReactComponent as FullscreenIcon } from "../../../assets/icons/fullscre
 import { ReactComponent as ExitFullscreenIcon } from "../../../assets/icons/fullscreen_exit.svg";
 import { ReactComponent as MicOffIcon } from "../../../assets/icons/mic_off.svg";
 import { ReactComponent as MicOnIcon } from "../../../assets/icons/mic_on.svg";
-// share, mic, cam, play/pause, full (rec class change)
 import { ReactComponent as PauseIcon } from "../../../assets/icons/pause.svg";
 import { ReactComponent as PlayIcon } from "../../../assets/icons/play.svg";
 import { ReactComponent as RecordIcon } from "../../../assets/icons/record.svg";
@@ -15,10 +16,9 @@ import { ReactComponent as ScreenShareOffIcon } from "../../../assets/icons/scre
 import { ReactComponent as ScreenShareOnIcon } from "../../../assets/icons/screen_share_on.svg";
 import { ReactComponent as VideocamOffIcon } from "../../../assets/icons/videocam_off.svg";
 import { ReactComponent as VideocamOnIcon } from "../../../assets/icons/videocam_on.svg";
-import { Video } from "../../../components/video";
-import { NetworkClient } from "../../../network/client";
-import { Client, Source } from "../../../network/types";
-import "./room.css";
+import { ReactComponent as LargePreloader } from "../../../assets/images/preloader.svg";
+import { Video } from "../../../components/video/video";
+import styles from "./room.module.css";
 
 interface Props {
   sessionId: string;
@@ -38,6 +38,7 @@ const Session: FunctionComponent<Props> = ({ sessionId }) => {
   const [isScreenShareOn, setIsScreenShareOn] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
+  const [networkState, setNetworkState] = useState<NETWORK_STATE>(NETWORK_STATE.DISCONNECTED);
   const [focusedStream, setFocusedStream] = useState<ClientStream | null>(null);
 
   useEffect(() => {
@@ -47,8 +48,11 @@ const Session: FunctionComponent<Props> = ({ sessionId }) => {
         setClients(clients);
       };
 
-      console.log(`Connecting: ${sessionId}`);
+      client.onNetworkStateChange = (state) => {
+        setNetworkState(state);
+      };
 
+      console.log(`Connecting: ${sessionId}`);
       client.connect(sessionId).then(() => {
         console.log("Connected");
         copyPageUrl();
@@ -156,54 +160,59 @@ const Session: FunctionComponent<Props> = ({ sessionId }) => {
     });
   };
 
+  if (networkState !== NETWORK_STATE.CONNECTED) {
+    return <div className={styles.preloaderCenter}><LargePreloader /></div>;
+  }
+
   return (
-    <div className="room-wrapper">
-      <div className="room-nav">
-        <div className="top-nav">
-          <button className="fab-btn" onClick={toggleRecording}><RecordIcon /></button>
-          {isRecording ? <button className="fab-btn" onClick={toggleRecordingState}> {isRecordingPaused ? <PauseIcon /> : <PlayIcon />}</button> : null}
-          <button className="fab-btn" onClick={toggleCamera}> {isCameraOn ? <VideocamOnIcon /> : <VideocamOffIcon />}</button>
-          <button className="fab-btn" onClick={toggleMic}> {isMicrophoneOn ? <MicOnIcon /> : <MicOffIcon />}</button>
-          <button className="fab-btn" onClick={toggleScreenShare}> {isScreenShareOn ? <ScreenShareOnIcon /> : <ScreenShareOffIcon />}</button>
-          <button className="fab-btn end-call" onClick={disconnect}><EndCallIcon /></button>
+    <div className={styles.wrapper}>
+      <div className={styles.roomNav}>
+        <div className={styles.topNav}>
+          <button title="Toggle recording" className={`fab-btn`} onClick={toggleRecording}><RecordIcon className={isRecording ? styles.recordOn : ""} /></button>
+          {isRecording ? <button title="Toggle play and pause" className="fab-btn" onClick={toggleRecordingState}> {isRecordingPaused ? <PauseIcon /> : <PlayIcon />}</button> : null}
+          <button title="Toggle videocamera" className="fab-btn" onClick={toggleCamera}> {isCameraOn ? <VideocamOnIcon /> : <VideocamOffIcon />}</button>
+          <button title="Toggle microphone" className="fab-btn" onClick={toggleMic}> {isMicrophoneOn ? <MicOnIcon /> : <MicOffIcon />}</button>
+          <button title="Toggle screenshare" className="fab-btn" onClick={toggleScreenShare}> {isScreenShareOn ? <ScreenShareOnIcon /> : <ScreenShareOffIcon />}</button>
+          <button title="End call" className={`fab-btn ${styles.endCall}`} onClick={disconnect}><EndCallIcon /></button>
         </div>
-        <div className="bot-nav">
-          <button className="fab-btn" onClick={copyPageUrl}><CopyUrlIcon /></button>
-          <button className="fab-btn"><DrawIcon /></button>
-          <button className="fab-btn"><MessageIcon /></button>
-        </div>
-      </div>
-
-      <div className="main-view">
-        <div className="example-canvas">
-          {focusedStream ? <Video className={"video"} autoPlay srcObject={getStream(focusedStream)} /> : null}
+        <div className={styles.botNav}>
+          <button title="Copy session URL" className="fab-btn" onClick={copyPageUrl}><CopyUrlIcon /></button>
+          <button title="Open drawing panel" className="fab-btn"><DrawIcon /></button>
+          <button title="Open messaging panel" className="fab-btn"><MessageIcon /></button>
         </div>
       </div>
 
-      <div className="side-ex-wrapper">
-        <div className="session-header">
-          <button className="fab-btn" onClick={toggleFullScreen}> {isFullScreen ? <ExitFullscreenIcon /> : <FullscreenIcon />}</button>
+      <div className={styles.mainView}>
+        <div className={styles.exampleCanvasWrapper}>
+          <div className={styles.exampleCanvas}>
+            {focusedStream ? <Video className={styles.video} autoPlay srcObject={getStream(focusedStream)} /> : null}
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.sideExWrapper}>
+        <div className={styles.sessionHeader}>
+          <button title="Toggle fullscreen mode" className="fab-btn" onClick={toggleFullScreen}> {isFullScreen ? <ExitFullscreenIcon /> : <FullscreenIcon />}</button>
           <div>
             <p>Session code:</p>
             <h3>{sessionId}</h3>
           </div>
         </div>
 
-        <div className="side-wrapper">
-          <div className="side-view">
+        <div className={styles.sideWrapper}>
+          <div className={styles.sideView}>
             {clients.flatMap((client) => {
               return client.sources.map((source) => {
                 const isFocusedStream = !!focusedStream && (client.id === focusedStream.clientId) && (source.id === focusedStream.srcId);
-
                 return (
-                  <div key={`${client.id}${source.id}`} className="example-screen" onClick={() => {
+                  <div title={isFocusedStream ? `Remove from focus` : `Click to focus`} key={`${client.id}${source.id}`} className={styles.exampleScreen} onClick={() => {
                     if (isFocusedStream) {
                       setFocusedStream(null);
                     } else {
                       setFocusedStream({ clientId: client.id, srcId: source.id });
                     }
                   }}>
-                    <Video className={"video"} autoPlay paused={isFocusedStream} srcObject={source.stream} />
+                    <Video className={`${styles.video} ${styles.preview}`} autoPlay paused={isFocusedStream} srcObject={source.stream} />
                   </div>
                 );
               });

@@ -1,0 +1,56 @@
+.gap {
+  gap: 5px;
+}
+
+.recordingsSpacing {
+  margin-bottom: 20px;
+}
+
+.tableWrapper {
+  max-width: 800px;
+  margin: auto;
+  overflow-x: auto;
+  padding: 0 24px;
+}
+
+.tableWrapper table {
+  background-color: var(--white-darkest);
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+  border-radius: 10px;
+  border-collapse: collapse;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+}
+
+.tableWrapper td,
+.tableWrapper th {
+  border: 1px solid transparent;
+  text-align: center;
+  padding: 6px 12px;
+}
+
+.tableWrapper tr {
+  border-radius: 5px;
+  padding: 10px;
+  background-color: var(--white);
+  transition: background 0.2s;
+}
+
+.tableWrapper thead tr {
+  background-color: transparent;
+}
+
+.tableWrapper tbody tr:hover {
+  background-color: var(--blue-light);
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  justify-content: center;
+}

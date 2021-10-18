@@ -1,0 +1,223 @@
+.negMargin {
+  margin-top: -10px;
+}
+
+/* Hero */
+
+.heroBanner {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin: 24px;
+  height: calc(100vh - 180px);
+}
+
+.heroImg {
+  height: 100%;
+}
+
+.heroText {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 30px;
+  max-width: 550px;
+  height: 100%;
+}
+
+.ctaBtn {
+  max-width: 280px;
+  padding: 14px 20px;
+  border-radius: 50px;
+  border: none;
+  background-color: var(--black);
+  color: var(--white);
+  font-size: 18px;
+  cursor: pointer;
+  margin-bottom: 100px;
+  transition: background 0.2s;
+}
+
+.ctaBtn:focus-visible {
+  outline: 2px solid var(--blue);
+}
+
+.ctaBtn:hover {
+  background-color: var(--black-opac);
+}
+
+/* Features */
+
+.featureWrapper {
+  max-width: 1200px;
+  margin: auto;
+  padding: 0 24px 8px 24px;
+}
+
+.title {
+  margin-bottom: 20px;
+}
+
+.rowCards {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: row;
+}
+
+.displayCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 320px;
+  padding: 20px;
+  background-image: linear-gradient(
+    hsl(303, 25%, 55%, 0.4),
+    hsl(252, 81%, 63%, 0.4)
+  );
+  border-radius: 20px;
+}
+
+.purple {
+  background-image: linear-gradient(
+    hsl(303, 25%, 55%, 0.4),
+    hsl(252, 81%, 63%, 0.4)
+  );
+}
+
+.blue {
+  background-image: linear-gradient(
+    hsl(200, 99%, 65%, 0.4),
+    hsl(226, 100%, 62%, 0.4)
+  );
+}
+
+.yellow {
+  background-image: linear-gradient(
+    hsl(49, 100%, 50%, 0.4),
+    hsl(35, 93%, 49%, 0.4)
+  );
+}
+
+.displayCard img {
+  margin: auto;
+  height: 200px;
+  width: 200px;
+}
+
+.displayCard h2,
+.longCard h2 {
+  margin-bottom: 10px;
+}
+
+.displayCard p {
+  margin-bottom: 60px;
+}
+
+.longCard {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 50px;
+  padding: 40px 20px 40px 70px;
+  background-image: linear-gradient(
+    hsl(95, 86%, 38%, 0.4),
+    hsl(119, 77%, 28%, 0.4)
+  );
+  border-radius: 20px;
+}
+
+.longCard div {
+  max-width: 550px;
+}
+
+.longCard img {
+  height: 150px;
+}
+
+.longCard img:first-child {
+  margin-right: -90px;
+}
+
+.footer {
+  margin-top: 150px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.credits {
+  margin-bottom: 100px;
+  text-align: right;
+}
+
+.mobileEdge {
+  display: none;
+}
+
+@media only screen and (max-width: 1070px) and (min-width: 920px) {
+  .displayCard {
+    max-width: 280px;
+  }
+}
+
+@media only screen and (max-width: 919px) {
+  .heroBanner {
+    margin: 0;
+    flex-direction: column;
+  }
+
+  .footer {
+    flex-direction: column;
+  }
+
+  .credits {
+    margin-top: 20px;
+    text-align: left;
+  }
+
+  .heroImg {
+    display: none;
+  }
+
+  .negMargin {
+    margin-top: -5px;
+  }
+
+  .displayCard {
+    max-width: 100%;
+  }
+
+  .rowCards {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .longCard {
+    margin-top: 20px;
+    padding: 20px;
+    flex-direction: column;
+  }
+
+  .longCard p {
+    margin-bottom: 60px;
+  }
+
+  .longCard img:first-child {
+    margin: 0;
+  }
+
+  .longCard div {
+    max-width: 100%;
+  }
+
+  .browsers {
+    display: none;
+  }
+
+  .mobileEdge {
+    display: inline;
+    width: 100%;
+  }
+}

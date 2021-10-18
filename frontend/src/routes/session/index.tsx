@@ -1,7 +1,8 @@
 import { FunctionComponent, useState } from "react";
 import { useHistory, useParams } from "react-router";
-import { NetworkServer } from "../../network/server";
+import { NetworkServer } from "../../../../shared/server";
 import Room from "./room/room";
+import Settings from "./settings/settings";
 
 interface Props { }
 const Component: FunctionComponent<Props> = () => {
@@ -9,11 +10,11 @@ const Component: FunctionComponent<Props> = () => {
     const history = useHistory();
 
     const [isServer] = useState(!params.id);
-    const [server] = useState(() => { console.log("CREATED"); return new NetworkServer(); });
+    const [server] = useState(() => { console.log("CREATED NetworkServer"); return new NetworkServer(); });
     const [username, setUsername] = useState("");
     const [started, setStarted] = useState(false);
 
-    const onStartClick = () => {
+    const start = () => {
         if (!username) return;
         if (!isServer) return setStarted(true);
         if (server.isStarted()) return;
@@ -27,10 +28,13 @@ const Component: FunctionComponent<Props> = () => {
         });
     };
 
-    return (started && params.id) ? <Room sessionId={params.id} /> : <div>
-        <input value={username} onChange={event => setUsername(event.target.value)} />
-        <button onClick={onStartClick}>Start</button>
-    </div>;
+    return (started && params.id) ? <Room sessionId={params.id} /> :
+        <Settings
+            username={username}
+            setUsername={setUsername}
+            start={start}
+            isServer={isServer}
+        />;
 };
 
 export default Component;

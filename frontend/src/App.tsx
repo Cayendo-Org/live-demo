@@ -1,10 +1,8 @@
-import React from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
-import "./App.css";
-import Join from "./routes/cards/join";
-import SessionEnd from "./routes/cards/session-end";
 import Home from "./routes/home/home";
+import Join from "./routes/join/join";
 import Recordings from "./routes/recordings/recordings";
+import SessionEnd from "./routes/session/ended/sessionEnd";
 import Session from "./routes/session/index";
 
 function App() {
