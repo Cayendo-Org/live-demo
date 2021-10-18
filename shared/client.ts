@@ -235,7 +235,7 @@ export class NetworkClient {
                     if (!candidate) { return; }
                     this.candidates.push(candidate);
 
-                    if (this.state < NETWORK_STATE.COORDINATOR_CONNECTING) { return; }
+                    if (this.state < NETWORK_STATE.COORDINATOR_CONNECTED) { return; }
 
                     // Flush candidates
                     for (let i = 0; i < this.candidates.length; i++) {
