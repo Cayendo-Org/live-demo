@@ -89,27 +89,6 @@
     margin-bottom: 6px;
 }
 
-.fab-btn {
-    height: 48px;
-    width: 48px;
-    border-radius: 50%;
-    border: 1px solid transparent;
-    background-color: var(--grey-duo);
-    cursor: pointer;
-    transition: background-color 0.2s;
-    background-repeat: no-repeat;
-    background-position: center;
-}
-
-.fab-btn:hover {
-    background-color: var(--grey-quad);
-}
-
-.fab-btn:focus-visible {
-    outline: none;
-    border: 1px solid var(--black);
-}
-
 #record {
     background-image: url(../icons/record.svg) ;
 }

@@ -1,3 +1,7 @@
+body {
+    padding: 12px 24px;
+}
+
 #navbar {
     padding: 0 0 10px 0;
     display: flex;
@@ -11,7 +15,11 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 30px;
+    gap: 10px;
+}
+
+.nav-links a {
+    padding: 10px;
 }
 
 .outlined-button {
@@ -20,7 +28,7 @@
     border-radius: 50px;
     background-color: transparent;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background 0.2s, box-shadow 0.2s;
 }
 
 .outlined-button:hover {
@@ -28,8 +36,9 @@
 }
 
 .outlined-button:focus-visible {
-    border: 1px solid transparent;
-    outline: 2px solid var(--blue);
+    outline: none;
+    border: solid 1px var(--blue);
+    box-shadow: 0 0 0 2px var(--blue-dark);
 }
 
 @media only screen and (max-width: 495px){
@@ -38,6 +47,6 @@
     }
 
     .nav-links {
-        gap: 20px;
+        gap: 0;
     }
 }
