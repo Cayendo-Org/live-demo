@@ -2,6 +2,9 @@
 
 * {
   font-family: "Inter", Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 :root {
@@ -14,8 +17,14 @@
   --black: #000;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
-  overflow-y: scroll;
+  /* overflow-y: scroll; */
   margin: 0;
   padding: 12px 24px 100px 24px;
   background-color: var(--light-grey);
@@ -98,8 +107,8 @@ a:focus-visible {
 }
 
 .primary-btn:focus-visible {
-  border: solid 1px #1A73E8;
-  box-shadow: 0 0 0 2px rgba(39, 94, 254, .3);
+  border: solid 1px #1a73e8;
+  box-shadow: 0 0 0 2px rgba(39, 94, 254, 0.3);
   outline: none;
 }
 
@@ -113,9 +122,8 @@ a:focus-visible {
   background-color: rgb(44, 43, 60, 0.03);
 }
 
-
 .input-label {
-  color: #59586A;
+  color: #59586a;
   font-size: 16px;
   padding-bottom: 10px;
   display: block;
@@ -137,13 +145,13 @@ a:focus-visible {
 }
 
 .input:hover {
-  border: solid 1px #1A73E8;
+  border: solid 1px #1a73e8;
 }
 
 .input:focus-visible {
   outline: none;
-  border: solid 1px #1A73E8;
-  box-shadow: 0 0 0 2px rgba(39, 94, 254, .3);
+  border: solid 1px #1a73e8;
+  box-shadow: 0 0 0 2px rgba(39, 94, 254, 0.3);
 }
 
 .input:invalid {

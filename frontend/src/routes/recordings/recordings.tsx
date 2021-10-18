@@ -1,15 +1,12 @@
-import { debugPort } from "process";
-import localforage from "localforage";
 import { FunctionComponent, useState } from "react";
-import { DataBase, METADATA } from "../../database/database";
-import { SiteNav } from "../../components/sitenav";
-import "./recordings.css";
-import { ReactComponent as Svg } from "../../animations/animate.svg";
 import { Link } from "react-router-dom";
-import Wink from "../../assets/Wink.png";
+import Wink from "../../assets/images/Wink.png";
+import { SiteNav } from "../../components/sitenav";
+import { DataBase, METADATA } from "../../database/database";
+import "./recordings.css";
 
-interface Props {}
-const Recordings: FunctionComponent<Props> = ({}) => {
+interface Props { }
+const Recordings: FunctionComponent<Props> = ({ }) => {
   DataBase.instance.initDB();
 
   const loadVideos = async () => {
@@ -142,19 +139,19 @@ const Recordings: FunctionComponent<Props> = ({}) => {
           </tbody>
         </table>
         <button
-            className="primary-btn"
-            onClick={() => {
-              uploadVideo(
-                new Date(),
-                "1:15",
-                10024,
-                ["Tomasz", "Brian", "Julian"],
-                new Blob()
-              );
-            }}
-          >
-            (TEMP) Upload video
-          </button>
+          className="primary-btn"
+          onClick={() => {
+            uploadVideo(
+              new Date(),
+              "1:15",
+              10024,
+              ["Tomasz", "Brian", "Julian"],
+              new Blob()
+            );
+          }}
+        >
+          (TEMP) Upload video
+        </button>
       </div>
     );
   } else {

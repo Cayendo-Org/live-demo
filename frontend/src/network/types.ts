@@ -1,25 +1,33 @@
-export const enum SIGNALLING_MESSAGE_TYPE {
+export const enum COORDINATOR_MESSAGE_TYPE {
     SESSION_CREATE,
     CONNECT,
     ICE,
 }
 
-export interface SignallingMessage<T extends SIGNALLING_MESSAGE_TYPE> {
+export interface CoordinatorMessage<T extends COORDINATOR_MESSAGE_TYPE> {
     id: string;
     type: T;
-    data: SignallingMessageOptions[T];
+    data: CoordinatorMessageOptions[T];
+}
+
+export const enum NETWORK_STATE {
+    DISCONNECTED,
+    COORDINATOR_CONNECTING, // Connecting to coordinator
+    COORDINATOR_CONNECTED, // Connected to coordinator
+    CONNECTING, // Connecting to server
+    CONNECTED, // Connected to server
 }
 
 export interface Client {
     id: string;
     name: string;
     sources: Source[];
+    state: NETWORK_STATE;
 }
 
 export interface ServerClient extends Client {
     dataChannel: RTCDataChannel;
     pc: RTCPeerConnection;
-    ready: boolean;
 }
 
 export interface SessionCreateOptions {
@@ -35,10 +43,10 @@ export interface ICEOptions {
     candidate: RTCIceCandidate;
 }
 
-export interface SignallingMessageOptions {
-    [SIGNALLING_MESSAGE_TYPE.SESSION_CREATE]: SessionCreateOptions,
-    [SIGNALLING_MESSAGE_TYPE.CONNECT]: ConnectOptions,
-    [SIGNALLING_MESSAGE_TYPE.ICE]: ICEOptions,
+export interface CoordinatorMessageOptions {
+    [COORDINATOR_MESSAGE_TYPE.SESSION_CREATE]: SessionCreateOptions,
+    [COORDINATOR_MESSAGE_TYPE.CONNECT]: ConnectOptions,
+    [COORDINATOR_MESSAGE_TYPE.ICE]: ICEOptions,
 }
 
 export const CONFIG = {

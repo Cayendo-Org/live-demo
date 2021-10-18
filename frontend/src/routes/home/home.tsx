@@ -1,11 +1,11 @@
 import React, { FunctionComponent } from "react";
 import { Link } from "react-router-dom";
-import chrome from "../../assets/chrome.svg";
-import edge from "../../assets/edge.svg";
-import FaceWithMask from "../../assets/FaceWithMask.png";
-import LiveDemo from "../../assets/LiveDemo.png";
-import Selfie from "../../assets/Selfie.png";
-import StarEyes from "../../assets/StarEyes.png";
+import chrome from "../../assets/images/chrome.svg";
+import edge from "../../assets/images/edge.svg";
+import FaceWithMask from "../../assets/images/FaceWithMask.png";
+import LiveDemo from "../../assets/images/LiveDemo.png";
+import Selfie from "../../assets/images/Selfie.png";
+import StarEyes from "../../assets/images/StarEyes.png";
 import { SiteNav } from "../../components/sitenav";
 import "./features.css";
 import "./hero.css";

@@ -1,11 +1,11 @@
 import { FunctionComponent } from "react";
 import { Link } from "react-router-dom";
+import Sleepy from "../../assets/images/Sleepy.png";
 import { SiteNav } from "../../components/sitenav";
-import Sleepy from "../../assets/Sleepy.png";
 import "../recordings/recordings.css";
 
-interface Props {}
-const SessionEnd: FunctionComponent<Props> = ({}) => {
+interface Props { }
+const SessionEnd: FunctionComponent<Props> = ({ }) => {
   return (
     <div className="max-width">
       <SiteNav></SiteNav>

@@ -2,7 +2,7 @@ import express from "express";
 import expressWs from "express-ws";
 import path from "path";
 import WebSocket from 'ws';
-import { SignallingMessage, SIGNALLING_MESSAGE_TYPE } from "./types";
+import { CoordinatorMessage, COORDINATOR_MESSAGE_TYPE } from "./types";
 
 const port = process.env.PORT || 25566;
 const { app } = expressWs(express());
@@ -24,7 +24,7 @@ app.ws("/", function (ws, req) {
     let data = JSON.parse(rawData.toString());
 
     // Create room
-    if (data.type === SIGNALLING_MESSAGE_TYPE.SESSION_CREATE) {
+    if (data.type === COORDINATOR_MESSAGE_TYPE.SESSION_CREATE) {
       let uuid = createUuid();
 
       while (sessions[uuid]) {
@@ -36,9 +36,9 @@ app.ws("/", function (ws, req) {
       (ws as any).id = "";
       sessions[uuid] = { server: ws, clientMap: {}, connectingClientMap: {} };
 
-      let mess: SignallingMessage<SIGNALLING_MESSAGE_TYPE.SESSION_CREATE> = {
+      let mess: CoordinatorMessage<COORDINATOR_MESSAGE_TYPE.SESSION_CREATE> = {
         id: "",
-        type: SIGNALLING_MESSAGE_TYPE.SESSION_CREATE,
+        type: COORDINATOR_MESSAGE_TYPE.SESSION_CREATE,
         data: { id: uuid }
       };
 
@@ -47,7 +47,7 @@ app.ws("/", function (ws, req) {
     }
 
     // Setup server metadata
-    if (data.type === SIGNALLING_MESSAGE_TYPE.CONNECT) {
+    if (data.type === COORDINATOR_MESSAGE_TYPE.CONNECT) {
       let session = sessions[(ws as any).sessionId ? (ws as any).sessionId : data.data.id];
       if (!session) {
         return ws.close();

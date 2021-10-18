@@ -3,26 +3,22 @@ import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "./App.css";
 import Join from "./routes/cards/join";
 import SessionEnd from "./routes/cards/session-end";
-import Start from "./routes/cards/start";
 import Home from "./routes/home/home";
 import Recordings from "./routes/recordings/recordings";
-import Room from "./routes/room/room";
+import Session from "./routes/session/index";
 
 function App() {
   return (
     <Router>
       <Switch>
-        <Route path="/start">
-          <Start></Start>
+        <Route path="/join">
+          <Join></Join>
         </Route>
         <Route path="/recordings">
           <Recordings></Recordings>
         </Route>
-        <Route path="/join">
-          <Join></Join>
-        </Route>
-        <Route path="/room">
-          <Room></Room>
+        <Route path={["/session/:id", "/session"]}>
+          <Session></Session>
         </Route>
         <Route path="/session-end">
           <SessionEnd></SessionEnd>
