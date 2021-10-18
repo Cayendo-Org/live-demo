@@ -221,7 +221,7 @@ export class NetworkServer {
                 if (!candidate) { return; }
                 candidates.push(candidate);
 
-                if (client.state === NETWORK_STATE.COORDINATOR_CONNECTED) { return; }
+                if (client.state < NETWORK_STATE.COORDINATOR_CONNECTED) { return; }
 
                 // Flush candidates
                 for (let i = 0; i < candidates.length; i++) {
