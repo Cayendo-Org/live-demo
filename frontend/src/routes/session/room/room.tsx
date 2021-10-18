@@ -1,4 +1,5 @@
 import { FunctionComponent, useEffect, useState } from "react";
+import { useHistory } from "react-router";
 import { NetworkClient } from "../../../../../shared/client";
 import { Client, NETWORK_STATE, Source } from "../../../../../shared/types";
 import { ReactComponent as DrawIcon } from "../../../assets/icons/brush.svg";
@@ -30,6 +31,7 @@ interface ClientStream {
 }
 
 const Session: FunctionComponent<Props> = ({ sessionId }) => {
+  const history = useHistory();
   const [client] = useState(new NetworkClient());
   const [isRecording, setIsRecording] = useState(false);
   const [isRecordingPaused, setIsRecordingPaused] = useState(false);
@@ -150,6 +152,7 @@ const Session: FunctionComponent<Props> = ({ sessionId }) => {
 
   const disconnect = () => {
     // client.disconnect();
+    history.push("/session-end");
   };
 
   const copyPageUrl = () => {
@@ -192,14 +195,14 @@ const Session: FunctionComponent<Props> = ({ sessionId }) => {
 
       <div className={styles.sideExWrapper}>
         <div className={styles.sessionHeader}>
-          <button title="Toggle fullscreen mode" className="fab-btn" onClick={toggleFullScreen}> {isFullScreen ? <ExitFullscreenIcon /> : <FullscreenIcon />}</button>
           <div>
-            <p>Session code:</p>
+            <p>Session code: </p>
             <h3>{sessionId}</h3>
           </div>
+          <button title="Toggle fullscreen mode" className="fab-btn" onClick={toggleFullScreen}> {isFullScreen ? <ExitFullscreenIcon /> : <FullscreenIcon />}</button>
         </div>
 
-        <div className={styles.sideWrapper}>
+        {isFullScreen ? null : <div className={styles.sideWrapper}>
           <div className={styles.sideView}>
             {clients.flatMap((client) => {
               return client.sources.map((source) => {
@@ -212,13 +215,16 @@ const Session: FunctionComponent<Props> = ({ sessionId }) => {
                       setFocusedStream({ clientId: client.id, srcId: source.id });
                     }
                   }}>
-                    <Video className={`${styles.video} ${styles.preview}`} autoPlay paused={isFocusedStream} srcObject={source.stream} />
+                    <div className={styles.focusTint}>
+                      <Video className={`${styles.video} ${styles.preview}`} autoPlay paused={isFocusedStream} srcObject={source.stream} /> 
+                      {/* <VideocamOnIcon className={styles.focusCam}></VideocamOnIcon> */}
+                    </div>
                   </div>
                 );
               });
             })}
           </div>
-        </div>
+        </div>}
       </div>
     </div>
   );

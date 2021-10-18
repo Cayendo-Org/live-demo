@@ -17,6 +17,8 @@
 
   --black: hsl(0, 0%, 0%);
   --black-opac: hsla(0, 0%, 0%, 0.8);
+  --black-opac-soft: hsla(0, 0%, 0%, 0.4);
+  --black-opac-mid: hsla(0, 0%, 0%, 0.6);
 
   --grey-duo: hsl(0, 0%, 59%, 0.2);
   --grey-quad: hsl(0, 0%, 59%, 0.4);

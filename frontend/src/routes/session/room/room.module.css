@@ -52,12 +52,54 @@
   overflow: hidden;
 }
 
+.focusCam {
+  fill: var(--white);
+  height: 40px;
+  width: 40px;
+}
+
+.darkTint, .focusTint {
+  position: relative;
+  width: 250px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.darkTint video, .focusTint video {
+  width: 100%;
+  display: block;
+}
+
+.darkTint:before, .focusTint:before {
+  content: '';
+  position: absolute;
+  background-color: var(--black-opac-soft);
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.focusTint:before {
+  background-color: var(--black-opac-mid);
+}
+
+.focusTint:hover:before {
+  background-color: var(--black-opac);
+}
+
+.darkTint:hover:before {
+  background-color: var(--black-opac-mid);
+}
+
 .sessionHeader {
   padding: 8px 12px;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  gap: 10px;
 }
 
 .sessionHeader p {
