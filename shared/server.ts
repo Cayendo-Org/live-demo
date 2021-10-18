@@ -46,6 +46,7 @@ export class NetworkServer {
 
             this.coordinatorConnection.onopen = () => {
                 console.log("Coordinator Opened");
+                this.setState(NETWORK_STATE.COORDINATOR_CONNECTED);
                 this.setState(NETWORK_STATE.CONNECTING);
                 this.coordinatorSend(COORDINATOR_MESSAGE_TYPE.SESSION_CREATE, { id: "" });
             };
@@ -166,6 +167,7 @@ export class NetworkServer {
                 // client.ready = false;
                 // DISCONNECT
                 // this.clients.splice();
+                client.state = NETWORK_STATE.DISCONNECTED;
 
                 for (const client of this.clients) {
                     if (client.state !== NETWORK_STATE.CONNECTED) continue;
@@ -221,7 +223,7 @@ export class NetworkServer {
                 if (!candidate) { return; }
                 candidates.push(candidate);
 
-                if (client.state < NETWORK_STATE.COORDINATOR_CONNECTED) { return; }
+                if (client.state < NETWORK_STATE.CONNECTING) { return; }
 
                 // Flush candidates
                 for (let i = 0; i < candidates.length; i++) {
@@ -236,7 +238,7 @@ export class NetworkServer {
             if (!pc.localDescription) return;
 
             this.coordinatorSend(COORDINATOR_MESSAGE_TYPE.CONNECT, { description: this.removeBandwidthRestriction(pc.localDescription), id: client.id }, message.id);
-            if (client.state === NETWORK_STATE.CONNECTING) { return; }
+            client.state = NETWORK_STATE.CONNECTING;
 
             // Flush candidates
             for (let i = 0; i < candidates.length; i++) {
