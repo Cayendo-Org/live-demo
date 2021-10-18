@@ -1,0 +1,55 @@
+#download {
+    background-image: url(../icons/file_download.svg) ;
+}
+
+#delete {
+    background-image: url(../icons/delete.svg) ;
+}
+
+.recordings-spacing {
+    margin-bottom: 20px;
+}
+
+.table-wrapper {
+    max-width: 800px;
+    margin: auto;
+    overflow-x:auto;
+}
+
+table {
+    background-color: var(--white-darkest);
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+    border-radius: 10px;
+    border-collapse: collapse;
+    overflow: hidden;
+    border: 1px solid transparent;
+    border-collapse:separate; 
+    border-spacing: 0 10px;
+}
+  
+td, th {
+    border: 1px solid transparent;
+    text-align: left;
+    padding: 6px 12px;
+}
+  
+tr:first-child {
+    background-color: transparent;
+}
+
+tr:first-child:hover {
+    background-color: transparent;
+}
+
+tr {
+    border-radius: 5px;
+    padding: 10px;
+    background-color: var(--white);
+    transition: background 0.2s;
+
+}
+ tr:hover {
+     background-color: var(--blue-light);
+ }
