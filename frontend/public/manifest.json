@@ -18,6 +18,11 @@
       "sizes": "512x512"
     }
   ],
+  "url_handlers": [
+    {
+      "origin": "https://record-together.azurewebsites.net"
+    }
+  ],
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#000000",
