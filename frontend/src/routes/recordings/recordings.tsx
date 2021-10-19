@@ -7,7 +7,7 @@ import { SiteNav } from "../../components/navbar/navbar";
 import { DataBase, METADATA } from "../../database/database";
 import styles from "./recordings.module.css";
 
-interface Props { }
+interface Props {}
 const Recordings: FunctionComponent<Props> = () => {
   DataBase.instance.initDB();
   const history = useHistory();
@@ -42,15 +42,38 @@ const Recordings: FunctionComponent<Props> = () => {
       });
   };
 
-  const getVideo = (_uuid: string) => {
+  const getVideo = (metaData: METADATA) => {
+    let _uuid = metaData._uuid;
     DataBase.instance
       .getRecording(_uuid)
       .then(function (value) {
-        alert("download video ".concat(_uuid));
+        let audioURL = window.URL.createObjectURL(value);
+        var a = document.createElement("a");
+        a.style.cssText = "display: none";
+        document.body.appendChild(a);
+        a.href = audioURL;
+        a.download = `${getVideoTime(metaData.date)}.webm`;
+        a.click();
+        window.URL.revokeObjectURL(audioURL);
       })
       .catch(function (err) {
         console.log(err);
       });
+  };
+  const getVideoTime = (date: Date) => {
+    return (date.getMonth() +
+      1 +
+      "-" +
+      date.getDate() +
+      "-" +
+      date.getFullYear() +
+      "-" +
+      date.toLocaleString("en-US", {
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        hour: "numeric",
+        minute: "numeric",
+        hour12: true,
+      }));
   };
 
   const deleteVideo = (_uuid: string) => {
@@ -74,147 +97,61 @@ const Recordings: FunctionComponent<Props> = () => {
             <h4>So empty in here</h4>
             <p>I wonder what that button does...</p>
           </div>
-          <button className="primary-btn" type="submit">Start session</button>
+          <button className="primary-btn" type="submit">
+            Start session
+          </button>
         </form>
-        <button
-          className="primary-btn"
-          onClick={() => {
-            uploadVideo(
-              new Date(),
-              "1:15",
-              10024,
-              ["Tomasz", "Brian", "Julian"],
-              new Blob()
-            );
-          }}
-        >
-          (TEMP) Upload video
-        </button>
       </div>
     );
   }
 
   if (recordings && recordings.length >= 0) {
-    // <div className="max-width">
-    //   <SiteNav></SiteNav>
-    //   <h3>Recordings</h3>
-    //   <table>
-    //     <tbody>
-    //       <tr>
-    //         <th>Date</th>
-    //         <th>Duration</th>
-    //         <th>Size</th>
-    //         <th>People</th>
-    //         <th>Controls</th>
-    //       </tr>
-    //       {recordings.map((item, key) => (
-    //         <tr key={key}>
-    //           <td>
-    //             {item.date.getMonth() +
-    //               1 +
-    //               "-" +
-    //               item.date.getDate() +
-    //               "-" +
-    //               item.date.getFullYear() +
-    //               " - " +
-    //               item.date.toLocaleString("en-US", {
-    //                 timeZone:
-    //                   Intl.DateTimeFormat().resolvedOptions().timeZone,
-    //                 hour: "numeric",
-    //                 minute: "numeric",
-    //                 hour12: true,
-    //               })}
-    //           </td>
-    //           <td>{item["duration"]}</td>
-    //           <td>{JSON.stringify(item.size)}</td>
-    //           <td>{item.people.join(", ")}</td>
-    //           <td>
-    //             <button onClick={() => getVideo(item._uuid)}>Download</button>
-    //             <button onClick={() => deleteVideo(item._uuid)}>
-    //               Delete
-    //             </button>
-    //           </td>
-    //         </tr>
-    //       ))}
-    //     </tbody>
-    //   </table>
-    // <button
-    //   className="primary-btn"
-    //   onClick={() => {
-    //     uploadVideo(
-    //       new Date(),
-    //       "1:15",
-    //       10024,
-    //       ["Tomasz", "Brian", "Julian"],
-    //       new Blob()
-    //     );
-    //   }}
-    // >
-    //   (TEMP) Upload video
-    // </button>
-    // </div>
-    return (<div className="max-width">
-      <SiteNav />
-      <div className={styles.tableWrapper}>
-        <h3 className={styles.recordingsSpacing}>Recordings</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Duration</th>
-              <th>Size</th>
-              <th>People</th>
-              <th>Controls</th>
-            </tr>
-          </thead>
-          <tbody>
-            {recordings.map((item) => (
-              <tr key={item._uuid}>
-                <td>
-                  {item.date.getMonth() +
-                    1 +
-                    "-" +
-                    item.date.getDate() +
-                    "-" +
-                    item.date.getFullYear() +
-                    "-" +
-                    item.date.toLocaleString("en-US", {
-                      timeZone:
-                        Intl.DateTimeFormat().resolvedOptions().timeZone,
-                      hour: "numeric",
-                      minute: "numeric",
-                      hour12: true,
-                    })}
-                </td>
-                <td>{item["duration"]}</td>
-                <td>{JSON.stringify(item.size)}</td>
-                <td>{item.people.join(", ")}</td>
-                <td>
-                  <div className={styles.row}>
-                    <button title="Download" className="fab-btn" onClick={() => getVideo(item._uuid)}><DownloadIcon /></button>
-                    <button title="Delete" className="fab-btn" onClick={() => deleteVideo(item._uuid)}><DeleteIcon /></button>
-                  </div>
-                </td>
+    return (
+      <div className="max-width">
+        <SiteNav />
+        <div className={styles.tableWrapper}>
+          <h3 className={styles.recordingsSpacing}>Recordings</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Duration</th>
+                <th>Size</th>
+                <th>People</th>
+                <th>Controls</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {recordings.map((item) => (
+                <tr key={item._uuid}>
+                  <td>{getVideoTime(item.date)}</td>
+                  <td>{item["duration"]}</td>
+                  <td>{`${JSON.stringify(item.size).slice(0, 5)} MB`}</td>
+                  <td>{item.people.join(", ")}</td>
+                  <td>
+                    <div className={styles.row}>
+                      <button
+                        title="Download"
+                        className="fab-btn"
+                        onClick={() => getVideo(item)}
+                      >
+                        <DownloadIcon />
+                      </button>
+                      <button
+                        title="Delete"
+                        className="fab-btn"
+                        onClick={() => deleteVideo(item._uuid)}
+                      >
+                        <DeleteIcon />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-      <button
-        className="primary-btn"
-        onClick={() => {
-          uploadVideo(
-            new Date(),
-            "1:15",
-            10024,
-            ["Tomasz", "Brian", "Julian"],
-            new Blob()
-          );
-        }}
-      >
-        (TEMP) Upload video
-      </button>
-    </div>
     );
   }
 
