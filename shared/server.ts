@@ -179,13 +179,15 @@ export class NetworkServer {
 
         client.pc.ontrack = (event) => {
             console.log("New Track", client);
-            let source = client.sources.find(source => source.id === event.streams[0].id);
-            if (source) {
-                source.stream = event.streams[0];
+            for (const clientSource of event.streams) {
+                let source = client.sources.find(source => source.id === clientSource.id);
+                if (!source) continue;
+
+                source.stream = clientSource;
 
                 for (const serverClient of this.clients) {
                     if (serverClient.state !== NETWORK_STATE.CONNECTED || serverClient.id === client.id) continue;
-                    serverClient.pc.addTrack(event.track, event.streams[0]);
+                    serverClient.pc.addTrack(event.track, clientSource);
                 }
             }
         };
