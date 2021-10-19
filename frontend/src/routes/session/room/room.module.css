@@ -137,11 +137,11 @@
   margin-bottom: 6px;
 }
 
-.endCall {
+button.endCall {
   background-color: var(--red);
 }
 
-.endCall:hover {
+button.endCall:hover {
   background-color: var(--red-dark);
 }
 
