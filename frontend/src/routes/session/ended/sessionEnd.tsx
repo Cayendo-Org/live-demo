@@ -19,7 +19,7 @@ const SessionEnd: FunctionComponent<Props> = () => {
         <div className={`center ${styles.gap}`}>
           <img draggable="false" src={Sleepy} alt="" />
           <h4>This session has ended</h4>
-          <p>Thank you for using Live Record.</p>
+          <p>Thank you for using Live Demo.</p>
         </div>
         <button className="primary-btn" onClick={onHomeClick}>Home page</button>
       </div>

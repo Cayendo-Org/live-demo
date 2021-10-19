@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from "react";
+import { FunctionComponent } from "react";
 import { useHistory } from "react-router-dom";
 import chrome from "../../assets/images/chrome.svg";
 import edge from "../../assets/images/edge.svg";
@@ -26,7 +26,7 @@ const Home: FunctionComponent<Props> = () => {
             <h1>Record faster,</h1>
             <h1 className={styles.negMargin}>together</h1>
           </div>
-          <h5 className="">Live Record connects everyone in the presentation process so teams can deliver better recordings, faster.</h5>
+          <h5 className="">Live Demo connects everyone in the presentation process so teams can deliver better recordings, faster.</h5>
           <button className={styles.ctaBtn} onClick={onSessionClick}>Start recording now</button>
         </div>
 
