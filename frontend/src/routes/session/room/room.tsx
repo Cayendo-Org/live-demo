@@ -53,7 +53,7 @@ const Session: FunctionComponent<Props> = ({ sessionId }) => {
     if (!client.isStarted()) {
       client.onClientsChanged = (clients) => {
         console.log("Clients:", clients);
-        setClients(clients);
+        setClients([...clients]);
       };
 
       client.onNetworkStateChange = (state) => {
@@ -106,7 +106,7 @@ const Session: FunctionComponent<Props> = ({ sessionId }) => {
             let blob = new Blob(recordingChunks, {
               type: "audio/ogg; codecs=opus",
             });
-            DataBase.instance.uploadVideo(new Date, "0:37", blob.size/1048576, clients.map((client)=>{return client.name}), blob)
+            DataBase.instance.uploadVideo(new Date, "0:37", blob.size / 1048576, clients.map((client) => { return client.name; }), blob);
             console.log("Recording saved");
             recordingChunks = [];
           };
@@ -118,7 +118,7 @@ const Session: FunctionComponent<Props> = ({ sessionId }) => {
   };
 
   const getAllClients = () => {
-    return clients.map((client)=>{return client.name})
+    return clients.map((client) => { return client.name; });
   };
 
   const toggleRecordingState = () => {

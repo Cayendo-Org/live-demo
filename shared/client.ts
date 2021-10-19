@@ -8,6 +8,7 @@ export class NetworkClient {
     id: string = "";
     state: NETWORK_STATE = NETWORK_STATE.DISCONNECTED;
     coordinatorConnection: WebSocket | null = null;
+    unassignedStreams: MediaStream[] = [];
 
     coordinatorSend<K extends COORDINATOR_MESSAGE_TYPE>(type: K, event: CoordinatorMessageOptions[K], id: string = "") {
         if (this.coordinatorConnection && this.coordinatorConnection.readyState === this.coordinatorConnection.OPEN) {
@@ -107,6 +108,8 @@ export class NetworkClient {
                             });
                         }
 
+                        this.assignStreams();
+
                         if (this.serverConn.localDescription) {
                             this.sendMessage(MESSAGE_TYPE.SOURCE_SYNC, {
                                 description: this.serverConn.localDescription,
@@ -156,36 +159,44 @@ export class NetworkClient {
     }
 
     startScreenShare = async () => {
-        let captureStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-        console.log("Stream:", captureStream);
-
+        // Sanity Checks
+        if (this.state !== NETWORK_STATE.CONNECTED) throw new Error("Not Connected");
         let client = this.clients.find(client => client.id === this.id)!;
+        if (client.sources.find(source => source.type === SOURCE_TYPE.SCREEN_SHARE)) throw new Error("Screen share already started");
+
+        let captureStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+
+        // Add Source
         let source: Source = { type: SOURCE_TYPE.SCREEN_SHARE, id: captureStream.id, stream: captureStream };
-        client.sources.push(source);
-
-        for (const track of captureStream.getTracks()) {
-            this.serverConn?.addTrack(track, captureStream);
-        }
-
-        this.onClientsChanged(this.clients);
-
+        this.addSource(source);
         return source;
     };
 
-    startCamera = async () => {
-        let captureStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        console.log("Stream:", captureStream);
-
+    addSource(source: Source) {
+        console.log("Source:", source);
         let client = this.clients.find(client => client.id === this.id)!;
-        let source: Source = { type: SOURCE_TYPE.CAMERA, id: captureStream.id, stream: captureStream };
         client.sources.push(source);
 
-        for (const track of captureStream.getTracks()) {
-            this.serverConn?.addTrack(track, captureStream);
+        if (source.stream) {
+            for (const track of source.stream.getTracks()) {
+                this.serverConn?.addTrack(track, source.stream);
+            }
         }
 
         this.onClientsChanged(this.clients);
+    }
 
+    startCamera = async () => {
+        // Sanity Checks
+        if (this.state !== NETWORK_STATE.CONNECTED) throw new Error("Not Connected");
+        let client = this.clients.find(client => client.id === this.id)!;
+        if (client.sources.find(source => source.type === SOURCE_TYPE.CAMERA)) throw new Error("Camera already started");
+
+        let captureStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+        // Add Source
+        let source: Source = { type: SOURCE_TYPE.CAMERA, id: captureStream.id, stream: captureStream };
+        this.addSource(source);
         return source;
     };
 
@@ -195,11 +206,36 @@ export class NetworkClient {
 
     onClientsChanged = (clients: Client[]) => { };
 
+    assignStreams = () => {
+        if (this.unassignedStreams.length === 0) return;
+
+        let changed = false;
+        for (const serverClient of this.clients) {
+            // console.log("STREAMS", serverClient, event.streams);
+            if (serverClient.state !== NETWORK_STATE.CONNECTED) continue;
+            for (const source of serverClient.sources) {
+                for (let i = this.unassignedStreams.length - 1; i > -1; i--) {
+                    if (this.unassignedStreams[i].id === source.id) {
+                        source.stream = this.unassignedStreams[i];
+                        this.unassignedStreams.splice(i, 1);
+                        changed = true;
+                    }
+                }
+            }
+        }
+
+        if (changed) {
+            console.log("STREAMS CHANGED");
+            this.onClientsChanged(this.clients);
+        }
+    };
+
     connect = async (sessionId: string) => {
         return new Promise<void>(async (resolve, reject) => {
             if (this.isStarted()) { return reject(new Error("Client already started")); }
             this.setState(NETWORK_STATE.COORDINATOR_CONNECTING);
 
+            //@ts-ignore
             this.coordinatorConnection = new WebSocket(process.env.REACT_APP_WS_URL!);
 
             this.coordinatorConnection.onmessage = this.onCoordinatorMessage;
@@ -246,8 +282,20 @@ export class NetworkClient {
                 };
 
                 this.serverConn.ontrack = (event) => {
-                    // event
-                    // this.onSourceAdded();
+                    console.log("new Stream", event);
+                    // Push onto unassigned streams
+                    let changed = false;
+                    for (const serverStream of event.streams) {
+                        let stream = this.unassignedStreams.find(item => item.id === serverStream.id);
+                        if (!stream) {
+                            this.unassignedStreams.push(serverStream);
+                            changed = true;
+                        }
+                    }
+
+                    if (changed) {
+                        this.assignStreams();
+                    }
                 };
 
                 await this.serverConn.setLocalDescription();

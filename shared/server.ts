@@ -28,6 +28,7 @@ export class NetworkServer {
             this.setState(NETWORK_STATE.COORDINATOR_CONNECTING);
             this.sessionCreateResolve = resolve;
 
+            //@ts-ignore
             this.coordinatorConnection = new WebSocket(process.env.REACT_APP_WS_URL!);
 
             this.coordinatorConnection.onmessage = this.onCoordinatorMessage;
