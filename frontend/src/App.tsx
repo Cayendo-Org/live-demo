@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import Home from "./routes/home/home";
 import Join from "./routes/join/join";
 import Recordings from "./routes/recordings/recordings";
-import SessionEnd from "./routes/session/ended/sessionEnd";
 import Session from "./routes/session/index";
 
 function App() {
@@ -17,9 +16,6 @@ function App() {
         </Route>
         <Route path={["/session/:id", "/session"]}>
           <Session></Session>
-        </Route>
-        <Route path="/session-end">
-          <SessionEnd></SessionEnd>
         </Route>
         <Route path="/">
           <Home></Home>

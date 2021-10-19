@@ -2,7 +2,7 @@ import { FunctionComponent } from "react";
 import { useHistory } from "react-router-dom";
 import Sleepy from "../../../assets/images/Sleepy.png";
 import { SiteNav } from "../../../components/navbar/navbar";
-import styles from "./sessionEnd.module.css";
+import styles from "./ended.module.css";
 
 interface Props { }
 const SessionEnd: FunctionComponent<Props> = () => {

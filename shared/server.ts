@@ -1,28 +1,18 @@
-import { CONFIG, CoordinatorMessage, CoordinatorMessageOptions, COORDINATOR_MESSAGE_TYPE, Message, MessageOptions, MESSAGE_TYPE, NETWORK_STATE, ServerClient } from "./types";
+import { Client, CONFIG, CoordinatorMessage, CoordinatorMessageOptions, COORDINATOR_MESSAGE_TYPE, Message, MessageOptions, MESSAGE_TYPE, NETWORK_STATE, ServerClient } from "./types";
 
 export class NetworkServer {
-    clients: ServerClient[] = [];
-    sessionCreateResolve: ((code: string) => void) | null = null;
-    coordinatorConnection: WebSocket | null = null;
-    state: NETWORK_STATE = NETWORK_STATE.DISCONNECTED;
+    //#region Public Attributes
+    public clients: ServerClient[] = [];
+    public state: NETWORK_STATE = NETWORK_STATE.DISCONNECTED;
+    //#endregion
 
-    coordinatorSend<K extends COORDINATOR_MESSAGE_TYPE>(type: K, event: CoordinatorMessageOptions[K], id: string = "") {
-        if (this.coordinatorConnection && this.coordinatorConnection.readyState === this.coordinatorConnection.OPEN) {
-            this.coordinatorConnection.send(JSON.stringify({ id: id, type: type, data: event }));
-        }
-    }
+    //#region Private Attributes
+    private coordinatorConnection: WebSocket | null = null;
+    private sessionCreateResolve: ((code: string) => void) | null = null;
+    //#endregion
 
-    isStarted = () => {
-        return this.state !== NETWORK_STATE.DISCONNECTED;
-    };
-
-    onNetworkStateChange = (state: NETWORK_STATE) => { };
-    setState = (state: NETWORK_STATE) => {
-        this.state = state;
-        this.onNetworkStateChange(state);
-    };
-
-    async start() {
+    //#region Public Methods
+    public async start() {
         return new Promise<string>(async (resolve, reject) => {
             if (this.isStarted()) { return reject(new Error("Server already started")); }
             this.setState(NETWORK_STATE.COORDINATOR_CONNECTING);
@@ -54,11 +44,67 @@ export class NetworkServer {
         });
     }
 
-    sendMessage<K extends MESSAGE_TYPE>(type: K, data: MessageOptions[K], client: ServerClient) {
-        client.dataChannel.send(JSON.stringify({ type: type, data: data }));
+    public isStarted = () => {
+        return this.state !== NETWORK_STATE.DISCONNECTED;
+    };
+    //#endregion
+
+    //#region Public Callbacks
+    public onNetworkStateChange = (state: NETWORK_STATE) => { };
+    //#endregion
+
+    //#region Private Methods
+    private coordinatorSend<K extends COORDINATOR_MESSAGE_TYPE>(type: K, event: CoordinatorMessageOptions[K], id: string = "") {
+        if (this.coordinatorConnection && this.coordinatorConnection.readyState === this.coordinatorConnection.OPEN) {
+            this.coordinatorConnection.send(JSON.stringify({ id: id, type: type, data: event }));
+        }
     }
 
-    onClient = (client: ServerClient) => {
+    private sendMessage<K extends MESSAGE_TYPE>(type: K, data: MessageOptions[K], client: ServerClient | null = null) {
+        if (!client) {
+            for (const serverClient of this.clients) {
+                if (serverClient.state !== NETWORK_STATE.CONNECTED) continue;
+                serverClient.dataChannel.send(JSON.stringify({ type: type, data: data }));
+            }
+        } else {
+            client.dataChannel.send(JSON.stringify({ type: type, data: data }));
+        }
+    }
+
+    private setState = (state: NETWORK_STATE) => {
+        this.state = state;
+        this.onNetworkStateChange(state);
+    };
+
+    private removeBandwidthRestriction(description: RTCSessionDescription): RTCSessionDescription {
+        return {
+            type: description.type,
+            sdp: description.sdp.replace(/b=AS:.*\r\n/, '').replace(/b=TIAS:.*\r\n/, ''),
+        } as RTCSessionDescription;
+    }
+
+    private disconnectClient(client: Client) {
+        if (client.state === NETWORK_STATE.DISCONNECTED) return;
+
+        client.state = NETWORK_STATE.DISCONNECTED;
+
+        for (const source of client.sources) {
+            if (!source.stream) continue;
+            for (const track of source.stream.getTracks()) {
+                track.stop();
+            }
+        }
+
+        this.sendMessage(MESSAGE_TYPE.LEAVE, { id: client.id });
+
+        let ind = this.clients.findIndex(item => item.id === client.id);
+        if (ind !== -1)
+            this.clients.splice(ind, 1);
+    }
+    //#endregion
+
+    //#region Private Callbacks
+    private onClient(client: ServerClient) {
         client.dataChannel.addEventListener("open", (event) => {
             console.log(`Server: Con: ${client.pc.connectionState}, ICE: ${client.pc.iceConnectionState}, COORDINAT: ${client.pc.signalingState}}`);
 
@@ -72,15 +118,7 @@ export class NetworkServer {
                 try {
                     await client.pc.setLocalDescription();
                     if (client.pc.localDescription) {
-                        this.sendMessage(MESSAGE_TYPE.SOURCE_SYNC, {
-                            description: client.pc.localDescription,
-                            clients: this.clients.map(client => {
-                                return {
-                                    id: client.id,
-                                    sources: client.sources.map(source => { return { type: source.type, id: source.id }; })
-                                };
-                            }),
-                        }, client);
+                        this.sendMessage(MESSAGE_TYPE.SDP, { description: client.pc.localDescription }, client);
                     }
                 } catch (err) {
                     console.error(err);
@@ -91,25 +129,44 @@ export class NetworkServer {
         client.dataChannel.onmessage = async (event) => {
             let data = JSON.parse(event.data);
 
-            if (data.type === MESSAGE_TYPE.SOURCE_SYNC) {
-                const message = data as Message<MESSAGE_TYPE.SOURCE_SYNC>;
+            if (data.type === MESSAGE_TYPE.ADD_SOURCE) {
+                const message = data as Message<MESSAGE_TYPE.ADD_SOURCE>;
+
+                // Sanity Check
+                let oldSource = client.sources.findIndex(item => item.id === message.data.source.id);
+                if (oldSource !== -1) return;
+
+                client.sources.push({
+                    id: message.data.source.id,
+                    type: message.data.source.type,
+                    stream: null
+                });
+
+                this.sendMessage(MESSAGE_TYPE.ADD_SOURCE, {
+                    client: client.id,
+                    source: {
+                        id: message.data.source.id,
+                        type: message.data.source.type
+                    }
+                });
+            } else if (data.type === MESSAGE_TYPE.REMOVE_SOURCE) {
+                const message = data as Message<MESSAGE_TYPE.REMOVE_SOURCE>;
+
+                let oldSource = client.sources.findIndex(item => item.id === message.data.source);
+
+                // Sanity Check
+                if (oldSource === -1) return;
+
+                client.sources.splice(oldSource, 1);
+
+                this.sendMessage(MESSAGE_TYPE.REMOVE_SOURCE, { client: client.id, source: message.data.source });
+            } else if (data.type === MESSAGE_TYPE.SDP) {
+                const message = data as Message<MESSAGE_TYPE.SDP>;
 
                 try {
                     const description = message.data.description;
 
                     console.log(`New remote SDP, Type: ${description.type}`);
-
-                    if (description.type === "offer") {
-                        // Update Sources
-                        client.sources = message.data.clients[0].sources.map(source => {
-                            let old = client.sources.find(item => item.id === source.id);
-                            return {
-                                id: source.id,
-                                type: source.type,
-                                stream: old ? old.stream : null
-                            };
-                        });
-                    }
 
                     await client.pc.setRemoteDescription(description);
                     if (description.type === "offer") {
@@ -117,15 +174,7 @@ export class NetworkServer {
                         if (client.pc.localDescription) {
                             console.log(message.data);
 
-                            this.sendMessage(MESSAGE_TYPE.SOURCE_SYNC, {
-                                description: client.pc.localDescription,
-                                clients: this.clients.map(client => {
-                                    return {
-                                        id: client.id,
-                                        sources: client.sources.map(source => { return { type: source.type, id: source.id }; })
-                                    };
-                                }),
-                            }, client);
+                            this.sendMessage(MESSAGE_TYPE.SDP, { description: client.pc.localDescription }, client);
                         }
                     }
                 } catch (err) {
@@ -152,15 +201,20 @@ export class NetworkServer {
                 client.name = message.data.name;
 
                 // Trigger join message for all clients
-                for (const serverClient of this.clients) {
-                    if (serverClient.state !== NETWORK_STATE.CONNECTED) continue;
-                    this.sendMessage(MESSAGE_TYPE.JOIN, { id: client.id, name: client.name }, serverClient);
-                }
+                this.sendMessage(MESSAGE_TYPE.JOIN, { id: client.id, name: client.name });
 
-                // Update tracks of new client
+                // Update Sources of new client
                 for (const serverClient of this.clients) {
                     if (serverClient.state !== NETWORK_STATE.CONNECTED || serverClient.id === client.id) continue;
                     for (const source of serverClient.sources) {
+                        this.sendMessage(MESSAGE_TYPE.ADD_SOURCE, {
+                            client: serverClient.id,
+                            source: {
+                                id: source.id,
+                                type: source.type
+                            }
+                        }, client);
+
                         if (!source.stream) continue;
                         for (const track of source.stream.getTracks()) {
                             client.pc.addTrack(track, source.stream);
@@ -168,15 +222,7 @@ export class NetworkServer {
                     }
                 }
             } else if (data.type === MESSAGE_TYPE.LEAVE) {
-                // client.ready = false;
-                // DISCONNECT
-                // this.clients.splice();
-                client.state = NETWORK_STATE.DISCONNECTED;
-
-                for (const client of this.clients) {
-                    if (client.state !== NETWORK_STATE.CONNECTED) continue;
-                    this.sendMessage(MESSAGE_TYPE.LEAVE, { id: client.id }, client);
-                }
+                this.disconnectClient(client);
             }
         };
 
@@ -196,14 +242,7 @@ export class NetworkServer {
         };
     };
 
-    removeBandwidthRestriction(description: RTCSessionDescription): RTCSessionDescription {
-        return {
-            type: description.type,
-            sdp: description.sdp.replace(/b=AS:.*\r\n/, '').replace(/b=TIAS:.*\r\n/, ''),
-        } as RTCSessionDescription;
-    }
-
-    onCoordinatorMessage = async (event: MessageEvent) => {
+    private onCoordinatorMessage = async (event: MessageEvent) => {
         const data = JSON.parse(event.data);
 
         if (data.type === COORDINATOR_MESSAGE_TYPE.CONNECT) {
@@ -222,6 +261,9 @@ export class NetworkServer {
             pc.oniceconnectionstatechange = () => {
                 if (pc.iceConnectionState === "failed") {
                     pc.restartIce();
+                } else if (pc.iceConnectionState == 'disconnected') {
+                    console.log('Disconnected');
+                    this.disconnectClient(client);
                 }
             };
 
@@ -269,4 +311,5 @@ export class NetworkServer {
             }
         }
     };
+    //#endregion
 }

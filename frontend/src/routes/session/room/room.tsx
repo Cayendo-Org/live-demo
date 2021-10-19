@@ -1,5 +1,4 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { useHistory } from "react-router";
 import { NetworkClient } from "../../../../../shared/client";
 import { Client, NETWORK_STATE, Source, SOURCE_NAMES } from "../../../../../shared/types";
 import { ReactComponent as DrawIcon } from "../../../assets/icons/brush.svg";
@@ -21,6 +20,7 @@ import { ReactComponent as LargePreloader } from "../../../assets/images/preload
 import { StopWatch } from "../../../components/stopWatch/stopWatch";
 import { Video } from "../../../components/video/video";
 import { DataBase } from "../../../database/database";
+import Ended from "../ended/ended";
 import styles from "./room.module.css";
 
 interface Props {
@@ -37,7 +37,7 @@ const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
   DataBase.instance.initDB();
   StopWatch.instance.initStopWatch();
   let recordingChunks: BlobPart[] = [];
-  const history = useHistory();
+
   const [client] = useState(new NetworkClient());
   const [isRecording, setIsRecording] = useState(false);
   const [isRecordingPaused, setIsRecordingPaused] = useState(false);
@@ -74,6 +74,18 @@ const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
         copyPageUrl();
       });
     }
+
+    let unloadListener = () => { client.disconnect(); };
+    let f5Listener = (e: KeyboardEvent) => { if (e.code === "f5") client.disconnect(); };
+
+    window.addEventListener('beforeunload', unloadListener);
+    window.addEventListener('keyup', f5Listener);
+
+    return () => {
+      window.removeEventListener('beforeunload', unloadListener);
+      window.removeEventListener('keyup', f5Listener);
+      client.disconnect();
+    };
   }, [client, sessionId, username]);
 
   const getStream = (feed: ClientStream): MediaStream | null => {
@@ -147,9 +159,11 @@ const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
 
   const toggleCamera = () => {
     if (isCameraOn) {
-      // client.endCamera();
       setIsCameraOn(false);
+      client.stopCamera();
     } else {
+      setIsCameraOn(true);
+
       client.startCamera().then((src: Source) => {
         if (!focusedStream) {
           setFocusedStream({
@@ -157,7 +171,6 @@ const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
             srcId: src.id,
           });
         }
-        setIsCameraOn(true);
       });
     }
   };
@@ -174,15 +187,16 @@ const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
 
   const toggleScreenShare = () => {
     if (isScreenShareOn) {
-      // client.endScreenShare();
+      client.stopScreenShare();
       setIsScreenShareOn(false);
     } else {
+      setIsScreenShareOn(true);
+
       client.startScreenShare().then((src: Source) => {
         setFocusedStream({
           clientId: client.id,
           srcId: src.id,
         });
-        setIsScreenShareOn(true);
       });
     }
   };
@@ -198,8 +212,8 @@ const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
   };
 
   const disconnect = () => {
-    // client.disconnect();
-    history.push("/session-end");
+    client.disconnect();
+    // history.push("/session-end");
   };
 
   const copyPageUrl = () => {
@@ -213,12 +227,15 @@ const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
     );
   };
 
+  if (networkState === NETWORK_STATE.DISCONNECTED) {
+    return <Ended />;
+  }
+
+
   if (networkState !== NETWORK_STATE.CONNECTED) {
-    return (
-      <div className={styles.preloaderCenter}>
-        <LargePreloader />
-      </div>
-    );
+    return <div className={styles.preloaderCenter}>
+      <LargePreloader />
+    </div>;
   }
 
   return (

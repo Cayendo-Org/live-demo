@@ -32,6 +32,81 @@ export interface SessionCreateOptions {
 
 //#endregion
 
+//#region Message
+export const enum MESSAGE_TYPE {
+    JOIN,
+    LEAVE,
+    ICE,
+    SDP,
+    ADD_SOURCE,
+    REMOVE_SOURCE,
+}
+
+export interface Message<T extends MESSAGE_TYPE> {
+    type: MESSAGE_TYPE;
+    data: MessageOptions[T];
+}
+
+export interface MessageOptions {
+    [MESSAGE_TYPE.ICE]: ICEOptions,
+    [MESSAGE_TYPE.JOIN]: JoinOptions,
+    [MESSAGE_TYPE.LEAVE]: LeaveOptions,
+    [MESSAGE_TYPE.SDP]: SDPOptions,
+    [MESSAGE_TYPE.ADD_SOURCE]: AddSourceOptions,
+    [MESSAGE_TYPE.REMOVE_SOURCE]: RemoveSourceOptions,
+}
+
+export interface JoinOptions {
+    id: string;
+    name: string;
+}
+
+export interface LeaveOptions {
+    id: string;
+}
+
+export interface AddSourceOptions {
+    client: string;
+    source: SourceDescription;
+}
+
+export interface RemoveSourceOptions {
+    client: string;
+    source: string;
+}
+
+export interface SDPOptions {
+    description: RTCSessionDescription;
+}
+
+export interface SourceSyncClient {
+    id: string;
+    sources: SourceDescription[];
+}
+//#endregion
+
+//#region Source
+export const enum SOURCE_TYPE {
+    CAMERA,
+    SCREEN_SHARE
+}
+
+export const SOURCE_NAMES = {
+    [SOURCE_TYPE.CAMERA]: "camera",
+    [SOURCE_TYPE.SCREEN_SHARE]: "screen",
+};
+
+export interface SourceDescription {
+    type: SOURCE_TYPE;
+    id: string;
+}
+
+export interface Source extends SourceDescription {
+    stream: MediaStream | null;
+}
+//#endregion
+
+//#region Other
 export const enum NETWORK_STATE {
     DISCONNECTED,
     COORDINATOR_CONNECTING, // Connecting to coordinator
@@ -62,65 +137,4 @@ export const CONFIG = {
         }
     ]
 };
-
-//#region Message
-
-export const enum MESSAGE_TYPE {
-    JOIN,
-    LEAVE,
-    SOURCE_SYNC,
-    ICE,
-}
-
-export interface Message<T extends MESSAGE_TYPE> {
-    type: MESSAGE_TYPE;
-    data: MessageOptions[T];
-}
-
-export interface MessageOptions {
-    [MESSAGE_TYPE.SOURCE_SYNC]: SourceSyncOptions,
-    [MESSAGE_TYPE.ICE]: ICEOptions,
-    [MESSAGE_TYPE.JOIN]: JoinOptions,
-    [MESSAGE_TYPE.LEAVE]: LeaveOptions,
-}
-
-export interface JoinOptions {
-    id: string;
-    name: string;
-}
-
-export interface LeaveOptions {
-    id: string;
-}
-
-export interface SourceSyncOptions {
-    description: RTCSessionDescription;
-    clients: SourceSyncClient[];
-}
-
-export interface SourceSyncClient {
-    id: string;
-    sources: SourceDescription[];
-}
-//#endregion
-
-//#region Source
-export const enum SOURCE_TYPE {
-    CAMERA,
-    SCREEN_SHARE
-}
-
-export const SOURCE_NAMES = {
-    [SOURCE_TYPE.CAMERA]: "camera",
-    [SOURCE_TYPE.SCREEN_SHARE]: "screen",
-};
-
-export interface SourceDescription {
-    type: SOURCE_TYPE;
-    id: string;
-}
-
-export interface Source extends SourceDescription {
-    stream: MediaStream | null;
-}
 //#endregion

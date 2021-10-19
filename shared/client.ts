@@ -1,239 +1,23 @@
 import { Client, CONFIG, CoordinatorMessage, CoordinatorMessageOptions, COORDINATOR_MESSAGE_TYPE, Message, MessageOptions, MESSAGE_TYPE, NETWORK_STATE, Source, SOURCE_TYPE } from "./types";
 
 export class NetworkClient {
-    clients: Client[] = [];
-    serverChannel: RTCDataChannel | null = null;
-    serverConn: RTCPeerConnection | null = null;
-    candidates: RTCIceCandidate[] = [];
-    id: string = "";
-    name: string = "";
-    state: NETWORK_STATE = NETWORK_STATE.DISCONNECTED;
-    coordinatorConnection: WebSocket | null = null;
-    unassignedStreams: MediaStream[] = [];
+    //#region Public Attributes
+    public id: string = "";
+    public name: string = "";
+    public state: NETWORK_STATE = NETWORK_STATE.DISCONNECTED;
+    public clients: Client[] = [];
+    //#endregion Private Attributes
 
-    coordinatorSend<K extends COORDINATOR_MESSAGE_TYPE>(type: K, event: CoordinatorMessageOptions[K], id: string = "") {
-        if (this.coordinatorConnection && this.coordinatorConnection.readyState === this.coordinatorConnection.OPEN) {
-            this.coordinatorConnection.send(JSON.stringify({ id: id, type: type, data: event }));
-        }
-    }
+    //#region Private Attributes
+    private serverChannel: RTCDataChannel | null = null;
+    private serverConn: RTCPeerConnection | null = null;
+    private candidates: RTCIceCandidate[] = [];
+    private coordinatorConnection: WebSocket | null = null;
+    private unassignedStreams: MediaStream[] = [];
+    //#endregion
 
-    sendMessage<K extends MESSAGE_TYPE>(type: K, data: MessageOptions[K]) {
-        this.serverChannel?.send(JSON.stringify({ type: type, data: data }));
-    }
-
-    onNetworkStateChange = (state: NETWORK_STATE) => { };
-    setState = (state: NETWORK_STATE) => {
-        this.state = state;
-        this.onNetworkStateChange(state);
-    };
-
-    onIdChange = (id: string) => { };
-
-    onServer = (resolve: () => void) => {
-        if (!this.serverChannel) return;
-
-        let makingOffer = false;
-        let ignoreOffer = false;
-
-        this.serverChannel.addEventListener("open", (event) => {
-            console.log("OPENED");
-            if (!this.serverConn || !this.serverChannel) return;
-            console.log(`Client: Con: ${this.serverConn.connectionState}, ICE: ${this.serverConn.iceConnectionState}`);
-
-            this.serverConn.onicecandidate = ({ candidate }) => {
-                if (candidate) {
-                    this.sendMessage(MESSAGE_TYPE.ICE, { candidate: candidate });
-                }
-            };
-
-            this.serverConn.onnegotiationneeded = async () => {
-                if (!this.serverConn || !this.serverChannel) return;
-                console.log("New SDP Needed");
-                try {
-                    makingOffer = true;
-                    await this.serverConn.setLocalDescription();
-                    if (this.serverConn.localDescription) {
-                        let client = this.clients.find(client => client.id === this.id)!;
-                        this.sendMessage(MESSAGE_TYPE.SOURCE_SYNC, {
-                            description: this.serverConn.localDescription,
-                            clients: [{ id: client.id, sources: client.sources.map((source) => { return { type: source.type, id: source.stream ? source.stream.id : "" }; }) }],
-                        });
-                    }
-                } catch (err) {
-                    console.error(err);
-                } finally {
-                    makingOffer = false;
-                }
-            };
-
-            this.sendMessage(MESSAGE_TYPE.JOIN, { id: this.id, name: this.name });
-        });
-
-        this.serverChannel.onmessage = async (event) => {
-            if (!this.serverConn || !this.serverChannel) return;
-
-            let data = JSON.parse(event.data);
-
-            if (data.type === MESSAGE_TYPE.SOURCE_SYNC) {
-                const message = data as Message<MESSAGE_TYPE.SOURCE_SYNC>;
-
-                try {
-                    const description = message.data.description;
-                    const offerCollision = (description.type === "offer") &&
-                        (makingOffer || this.serverConn.signalingState !== "stable");
-
-                    ignoreOffer = offerCollision;
-                    if (ignoreOffer) {
-                        return;
-                    }
-
-                    console.log(`New remote SDP, Type: ${description.type}`);
-
-                    await this.serverConn.setRemoteDescription(description);
-                    if (description.type === "offer") {
-                        await this.serverConn.setLocalDescription();
-                        let client = this.clients.find(client => client.id === this.id)!;
-
-                        // Update Sources
-                        for (const serverClient of message.data.clients) {
-                            if (serverClient.id === this.id) continue;
-
-                            let clientClient = this.clients.find(client => client.id === serverClient.id);
-                            if (!clientClient) continue;
-
-                            clientClient.sources = serverClient.sources.map(serverSource => {
-                                let clientSource = clientClient!.sources.find(item => item.id === serverSource.id);
-                                return {
-                                    type: serverSource.type,
-                                    id: serverSource.id,
-                                    stream: clientSource ? clientSource.stream : null
-                                };
-                            });
-                        }
-
-                        this.assignStreams();
-
-                        if (this.serverConn.localDescription) {
-                            this.sendMessage(MESSAGE_TYPE.SOURCE_SYNC, {
-                                description: this.serverConn.localDescription,
-                                clients: [{ id: client.id, sources: client.sources.map((source) => { return { type: source.type, id: source.stream ? source.stream.id : "" }; }) }],
-                            });
-                        }
-                    }
-                } catch (err) {
-                    console.error(err);
-                }
-            } else if (data.type === MESSAGE_TYPE.ICE) {
-                const message = data as Message<MESSAGE_TYPE.ICE>;
-
-                try {
-                    await this.serverConn.addIceCandidate(message.data.candidate);
-                } catch (err) {
-                    if (!ignoreOffer) {
-                        throw err;
-                    }
-                }
-            } else if (data.type === MESSAGE_TYPE.JOIN) {
-                const message = data as Message<MESSAGE_TYPE.JOIN>;
-
-                this.clients.push({ id: message.data.id, name: message.data.name, sources: [], state: NETWORK_STATE.CONNECTED });
-                if (message.data.id === this.id) {
-                    this.setState(NETWORK_STATE.CONNECTED);
-                    resolve();
-                }
-                console.log("Client joined");
-            } else if (data.type === MESSAGE_TYPE.LEAVE) {
-                const message = data as Message<MESSAGE_TYPE.LEAVE>;
-
-                let ind = this.clients.findIndex(client => client.id === message.data.id);
-                if (ind !== -1) {
-                    this.clients.splice(ind, 1);
-                    console.log("Client Left");
-                }
-            }
-        };
-    };
-
-    removeBandwidthRestriction(description: RTCSessionDescription): RTCSessionDescription {
-        return {
-            type: description.type,
-            sdp: description.sdp.replace(/b=AS:.*\r\n/, '').replace(/b=TIAS:.*\r\n/, ''),
-        } as RTCSessionDescription;
-    }
-
-    startScreenShare = async () => {
-        // Sanity Checks
-        if (this.state !== NETWORK_STATE.CONNECTED) throw new Error("Not Connected");
-        let client = this.clients.find(client => client.id === this.id)!;
-        if (client.sources.find(source => source.type === SOURCE_TYPE.SCREEN_SHARE)) throw new Error("Screen share already started");
-
-        let captureStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-
-        // Add Source
-        let source: Source = { type: SOURCE_TYPE.SCREEN_SHARE, id: captureStream.id, stream: captureStream };
-        this.addSource(source);
-        return source;
-    };
-
-    addSource(source: Source) {
-        console.log("Source:", source);
-        let client = this.clients.find(client => client.id === this.id)!;
-        client.sources.push(source);
-
-        if (source.stream) {
-            for (const track of source.stream.getTracks()) {
-                this.serverConn?.addTrack(track, source.stream);
-            }
-        }
-
-        this.onClientsChanged(this.clients);
-    }
-
-    startCamera = async () => {
-        // Sanity Checks
-        if (this.state !== NETWORK_STATE.CONNECTED) throw new Error("Not Connected");
-        let client = this.clients.find(client => client.id === this.id)!;
-        if (client.sources.find(source => source.type === SOURCE_TYPE.CAMERA)) throw new Error("Camera already started");
-
-        let captureStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-
-        // Add Source
-        let source: Source = { type: SOURCE_TYPE.CAMERA, id: captureStream.id, stream: captureStream };
-        this.addSource(source);
-        return source;
-    };
-
-    isStarted = () => {
-        return this.state !== NETWORK_STATE.DISCONNECTED;
-    };
-
-    onClientsChanged = (clients: Client[]) => { };
-
-    assignStreams = () => {
-        if (this.unassignedStreams.length === 0) return;
-
-        let changed = false;
-        for (const serverClient of this.clients) {
-            // console.log("STREAMS", serverClient, event.streams);
-            if (serverClient.state !== NETWORK_STATE.CONNECTED) continue;
-            for (const source of serverClient.sources) {
-                for (let i = this.unassignedStreams.length - 1; i > -1; i--) {
-                    if (this.unassignedStreams[i].id === source.id) {
-                        source.stream = this.unassignedStreams[i];
-                        this.unassignedStreams.splice(i, 1);
-                        changed = true;
-                    }
-                }
-            }
-        }
-
-        if (changed) {
-            console.log("STREAMS CHANGED");
-            this.onClientsChanged(this.clients);
-        }
-    };
-
-    connect = async (sessionId: string, name: string) => {
+    //#region Public Methods
+    public connect = async (sessionId: string, name: string) => {
         return new Promise<void>(async (resolve, reject) => {
             if (this.isStarted()) { return reject(new Error("Client already started")); }
             this.setState(NETWORK_STATE.COORDINATOR_CONNECTING);
@@ -308,7 +92,308 @@ export class NetworkClient {
         });
     };
 
-    onCoordinatorMessage = async (event: MessageEvent) => {
+    public disconnect() {
+        if (!this.serverConn || this.state !== NETWORK_STATE.CONNECTED) return;
+
+        let client = this.clients.find(client => client.id === this.id)!;
+        if (client.sources.find(source => source.type === SOURCE_TYPE.CAMERA)) throw new Error("Camera already started");
+        this.stopCamera();
+        this.stopScreenShare();
+
+        this.sendMessage(MESSAGE_TYPE.LEAVE, { id: this.id });
+        this.setState(NETWORK_STATE.DISCONNECTED);
+        this.serverConn.close();
+        this.serverConn = null;
+
+        this.onClientsChanged(this.clients);
+    }
+
+    public startCamera = async () => {
+        // Sanity Checks
+        if (this.state !== NETWORK_STATE.CONNECTED) throw new Error("Not Connected");
+        let client = this.clients.find(client => client.id === this.id)!;
+        if (client.sources.find(source => source.type === SOURCE_TYPE.CAMERA)) throw new Error("Camera already started");
+
+        let captureStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+        // Add Source
+        let source: Source = { type: SOURCE_TYPE.CAMERA, id: captureStream.id, stream: captureStream };
+        this.addSource(source);
+        return source;
+    };
+
+    public stopCamera = () => {
+        if (this.state !== NETWORK_STATE.CONNECTED) throw new Error("Not Connected");
+        let client = this.clients.find(client => client.id === this.id)!;
+        let camera = client.sources.find(source => source.type === SOURCE_TYPE.CAMERA);
+        if (!camera) return;
+        this.removeSource(camera);
+    };
+
+    public startScreenShare = async () => {
+        // Sanity Checks
+        if (this.state !== NETWORK_STATE.CONNECTED) throw new Error("Not Connected");
+        let client = this.clients.find(client => client.id === this.id)!;
+        if (client.sources.find(source => source.type === SOURCE_TYPE.SCREEN_SHARE)) throw new Error("Screen share already started");
+
+        let captureStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+
+        // Add Source
+        let source: Source = { type: SOURCE_TYPE.SCREEN_SHARE, id: captureStream.id, stream: captureStream };
+        this.addSource(source);
+        return source;
+    };
+
+    public stopScreenShare = () => {
+        if (this.state !== NETWORK_STATE.CONNECTED) throw new Error("Not Connected");
+        let client = this.clients.find(client => client.id === this.id)!;
+        let screen = client.sources.find(source => source.type === SOURCE_TYPE.SCREEN_SHARE);
+        if (!screen) return;
+        this.removeSource(screen);
+    };
+
+    public isStarted = () => {
+        return this.state !== NETWORK_STATE.DISCONNECTED;
+    };
+    //#endregion
+
+    //#region Public Callbacks
+    public onNetworkStateChange = (state: NETWORK_STATE) => { };
+    public onClientsChanged = (clients: Client[]) => { };
+    public onIdChange = (id: string) => { };
+    //#endregion
+
+    //#region Private Methods
+    private coordinatorSend<K extends COORDINATOR_MESSAGE_TYPE>(type: K, event: CoordinatorMessageOptions[K], id: string = "") {
+        if (this.coordinatorConnection && this.coordinatorConnection.readyState === this.coordinatorConnection.OPEN) {
+            this.coordinatorConnection.send(JSON.stringify({ id: id, type: type, data: event }));
+        }
+    }
+
+    private sendMessage<K extends MESSAGE_TYPE>(type: K, data: MessageOptions[K]) {
+        this.serverChannel?.send(JSON.stringify({ type: type, data: data }));
+    }
+
+    private setState = (state: NETWORK_STATE) => {
+        this.state = state;
+        this.onNetworkStateChange(state);
+    };
+
+    private removeBandwidthRestriction(description: RTCSessionDescription): RTCSessionDescription {
+        return {
+            type: description.type,
+            sdp: description.sdp.replace(/b=AS:.*\r\n/, '').replace(/b=TIAS:.*\r\n/, ''),
+        } as RTCSessionDescription;
+    }
+
+    private addSource(source: Source) {
+        console.log("Source:", source);
+        let client = this.clients.find(client => client.id === this.id)!;
+        client.sources.push(source);
+
+        this.sendMessage(MESSAGE_TYPE.ADD_SOURCE, {
+            client: this.id,
+            source: {
+                id: source.id,
+                type: source.type
+            }
+        });
+
+        if (source.stream) {
+            for (const track of source.stream.getTracks()) {
+                this.serverConn?.addTrack(track, source.stream);
+            }
+        }
+
+        this.onClientsChanged(this.clients);
+    }
+
+    private removeSource(source: Source) {
+        let client = this.clients.find(client => client.id === this.id);
+        if (!client) return;
+
+        let ind = client.sources.findIndex(item => item.id === source.id);
+        if (ind === -1) return;
+
+        console.log("Remove Source:", source);
+        source = client.sources[ind];
+
+        if (source.stream) {
+            for (const track of source.stream.getTracks()) {
+                track.stop();
+            }
+        }
+
+        this.sendMessage(MESSAGE_TYPE.REMOVE_SOURCE, {
+            client: this.id,
+            source: source.id
+        });
+
+        client.sources.splice(ind, 1);
+
+        this.onClientsChanged(this.clients);
+    }
+
+    private assignStreams = () => {
+        if (this.unassignedStreams.length === 0) return;
+
+        let changed = false;
+        for (const serverClient of this.clients) {
+            // console.log("STREAMS", serverClient, event.streams);
+            if (serverClient.state !== NETWORK_STATE.CONNECTED) continue;
+            for (const source of serverClient.sources) {
+                for (let i = this.unassignedStreams.length - 1; i > -1; i--) {
+                    if (this.unassignedStreams[i].id === source.id) {
+                        source.stream = this.unassignedStreams[i];
+                        this.unassignedStreams.splice(i, 1);
+                        changed = true;
+                    }
+                }
+            }
+        }
+
+        if (changed) {
+            console.log("STREAMS CHANGED");
+            this.onClientsChanged(this.clients);
+        }
+    };
+    //#endregion
+
+    //#region Private Callbacks
+    private onServer = (resolve: () => void) => {
+        if (!this.serverChannel) return;
+
+        let makingOffer = false;
+        let ignoreOffer = false;
+
+        this.serverChannel.addEventListener("open", (event) => {
+            console.log("OPENED");
+            if (!this.serverConn || !this.serverChannel) return;
+            console.log(`Client: Con: ${this.serverConn.connectionState}, ICE: ${this.serverConn.iceConnectionState}`);
+
+            this.serverConn.onicecandidate = ({ candidate }) => {
+                if (candidate) {
+                    this.sendMessage(MESSAGE_TYPE.ICE, { candidate: candidate });
+                }
+            };
+
+            this.serverConn.onnegotiationneeded = async () => {
+                if (!this.serverConn || !this.serverChannel) return;
+                console.log("New SDP Needed");
+                try {
+                    makingOffer = true;
+                    await this.serverConn.setLocalDescription();
+                    if (this.serverConn.localDescription) {
+                        this.sendMessage(MESSAGE_TYPE.SDP, { description: this.serverConn.localDescription });
+                    }
+                } catch (err) {
+                    console.error(err);
+                } finally {
+                    makingOffer = false;
+                }
+            };
+
+            this.sendMessage(MESSAGE_TYPE.JOIN, { id: this.id, name: this.name });
+        });
+
+        this.serverChannel.onmessage = async (event) => {
+            if (!this.serverConn || !this.serverChannel) return;
+
+            let data = JSON.parse(event.data);
+
+            if (data.type === MESSAGE_TYPE.ADD_SOURCE) {
+                const message = data as Message<MESSAGE_TYPE.ADD_SOURCE>;
+
+                console.log("Added Source:", message.data);
+
+                let client = this.clients.find(client => client.id === message.data.client);
+                if (!client) return;
+
+                // Sanity Check
+                let oldSource = client.sources.findIndex(item => item.id === message.data.source.id);
+                if (oldSource !== -1) return;
+
+                client.sources.push({
+                    id: message.data.source.id,
+                    type: message.data.source.type,
+                    stream: null
+                });
+
+                this.assignStreams();
+            } else if (data.type === MESSAGE_TYPE.REMOVE_SOURCE) {
+                const message = data as Message<MESSAGE_TYPE.REMOVE_SOURCE>;
+
+                console.log("Removed Source:", message.data);
+
+                let client = this.clients.find(client => client.id === message.data.client);
+                if (!client) return;
+
+                let oldSource = client.sources.findIndex(item => item.id === message.data.source);
+
+                // Sanity Check
+                if (oldSource === -1) return;
+
+                client.sources.splice(oldSource, 1);
+            } else if (data.type === MESSAGE_TYPE.SDP) {
+                const message = data as Message<MESSAGE_TYPE.SDP>;
+
+                try {
+                    const description = message.data.description;
+                    const offerCollision = (description.type === "offer") &&
+                        (makingOffer || this.serverConn.signalingState !== "stable");
+
+                    ignoreOffer = offerCollision;
+                    if (ignoreOffer) {
+                        return;
+                    }
+
+                    console.log(`New remote SDP, Type: ${description.type}`);
+
+                    await this.serverConn.setRemoteDescription(description);
+
+                    if (description.type === "offer") {
+                        await this.serverConn.setLocalDescription();
+
+                        if (this.serverConn.localDescription) {
+                            this.sendMessage(MESSAGE_TYPE.SDP, { description: this.serverConn.localDescription });
+                        }
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
+            } else if (data.type === MESSAGE_TYPE.ICE) {
+                const message = data as Message<MESSAGE_TYPE.ICE>;
+
+                try {
+                    await this.serverConn.addIceCandidate(message.data.candidate);
+                } catch (err) {
+                    if (!ignoreOffer) {
+                        throw err;
+                    }
+                }
+            } else if (data.type === MESSAGE_TYPE.JOIN) {
+                const message = data as Message<MESSAGE_TYPE.JOIN>;
+
+                this.clients.push({ id: message.data.id, name: message.data.name, sources: [], state: NETWORK_STATE.CONNECTED });
+                if (message.data.id === this.id) {
+                    this.setState(NETWORK_STATE.CONNECTED);
+                    resolve();
+                }
+                console.log("Client joined");
+            } else if (data.type === MESSAGE_TYPE.LEAVE) {
+                const message = data as Message<MESSAGE_TYPE.LEAVE>;
+
+                let ind = this.clients.findIndex(client => client.id === message.data.id);
+                if (ind !== -1) {
+                    this.clients.splice(ind, 1);
+                    console.log("Client Left");
+                    this.onClientsChanged(this.clients);
+                }
+            }
+        };
+    };
+
+    private onCoordinatorMessage = async (event: MessageEvent) => {
         const data = JSON.parse(event.data);
         console.log(data);
 
@@ -333,4 +418,5 @@ export class NetworkClient {
             await this.serverConn.setRemoteDescription(message.data.description);
         }
     };
+    //#endregion
 }
