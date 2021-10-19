@@ -238,7 +238,6 @@ const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
               className="fab-btn"
               onClick={toggleRecordingState}
             >
-              {" "}
               {isRecordingPaused ? <PauseIcon /> : <PlayIcon />}
             </button>
           ) : null}
@@ -247,7 +246,6 @@ const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
             className="fab-btn"
             onClick={toggleCamera}
           >
-            {" "}
             {isCameraOn ? <VideocamOnIcon /> : <VideocamOffIcon />}
           </button>
           <button
@@ -255,7 +253,6 @@ const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
             className="fab-btn"
             onClick={toggleMic}
           >
-            {" "}
             {isMicrophoneOn ? <MicOnIcon /> : <MicOffIcon />}
           </button>
           <button
@@ -263,7 +260,6 @@ const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
             className="fab-btn"
             onClick={toggleScreenShare}
           >
-            {" "}
             {isScreenShareOn ? <ScreenShareOnIcon /> : <ScreenShareOffIcon />}
           </button>
           <button
@@ -296,6 +292,7 @@ const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
           <div className={styles.exampleCanvas}>
             {focusedStream ? (
               <Video
+                muted={clientId === focusedStream.clientId}
                 className={styles.video}
                 autoPlay
                 srcObject={getStream(focusedStream)}
@@ -316,7 +313,6 @@ const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
             className="fab-btn"
             onClick={toggleFullScreen}
           >
-            {" "}
             {isFullScreen ? <ExitFullscreenIcon /> : <FullscreenIcon />}
           </button>
         </div>
@@ -356,7 +352,7 @@ const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
                         srcObject={source.stream}
                       />
                       <div className={`${styles.tint} ${isFocusedStream ? styles.focusTint : styles.darkTint}`}>
-                        {isFocusedStream ? <VideocamOnIcon className={styles.focusCam}></VideocamOnIcon> : null}
+                        {isFocusedStream ? <VideocamOnIcon className={styles.focusCam} /> : null}
                         <p className={styles.nameTag}>{`${serverClient.name}'s ${SOURCE_NAMES[source.type]}`}</p>
                       </div>
                     </div>
