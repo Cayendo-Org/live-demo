@@ -1,7 +1,7 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import { useHistory } from "react-router";
 import { NetworkClient } from "../../../../../shared/client";
-import { Client, NETWORK_STATE, Source } from "../../../../../shared/types";
+import { Client, NETWORK_STATE, Source, SOURCE_NAMES } from "../../../../../shared/types";
 import { ReactComponent as DrawIcon } from "../../../assets/icons/brush.svg";
 import { ReactComponent as EndCallIcon } from "../../../assets/icons/call_end.svg";
 import { ReactComponent as MessageIcon } from "../../../assets/icons/chat.svg";
@@ -25,6 +25,7 @@ import styles from "./room.module.css";
 
 interface Props {
   sessionId: string;
+  username: string;
 }
 
 interface ClientStream {
@@ -32,7 +33,7 @@ interface ClientStream {
   srcId: string;
 }
 
-const Session: FunctionComponent<Props> = ({ sessionId }) => {
+const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
   DataBase.instance.initDB();
   StopWatch.instance.initStopWatch();
   let recordingChunks: BlobPart[] = [];
@@ -50,6 +51,7 @@ const Session: FunctionComponent<Props> = ({ sessionId }) => {
     NETWORK_STATE.DISCONNECTED
   );
   const [focusedStream, setFocusedStream] = useState<ClientStream | null>(null);
+  const [clientId, setClientId] = useState<string>("");
 
   useEffect(() => {
     if (!client.isStarted()) {
@@ -58,17 +60,21 @@ const Session: FunctionComponent<Props> = ({ sessionId }) => {
         setClients([...clients]);
       };
 
+      client.onIdChange = (id) => {
+        setClientId(id);
+      };
+
       client.onNetworkStateChange = (state) => {
         setNetworkState(state);
       };
 
       console.log(`Connecting: ${sessionId}`);
-      client.connect(sessionId).then(() => {
+      client.connect(sessionId, username).then(() => {
         console.log("Connected");
         copyPageUrl();
       });
     }
-  }, [client, sessionId]);
+  }, [client, sessionId, username]);
 
   const getStream = (feed: ClientStream): MediaStream | null => {
     const client = clients.find((client) => client.id === feed.clientId);
@@ -318,38 +324,40 @@ const Session: FunctionComponent<Props> = ({ sessionId }) => {
         {isFullScreen ? null : (
           <div className={styles.sideWrapper}>
             <div className={styles.sideView}>
-              {clients.flatMap((client) => {
-                return client.sources.map((source) => {
+              {clients.flatMap((serverClient) => {
+                return serverClient.sources.map((source) => {
                   const isFocusedStream =
                     !!focusedStream &&
-                    client.id === focusedStream.clientId &&
+                    serverClient.id === focusedStream.clientId &&
                     source.id === focusedStream.srcId;
                   return (
                     <div
                       title={
                         isFocusedStream ? `Remove from focus` : `Click to focus`
                       }
-                      key={`${client.id}${source.id}`}
+                      key={`${serverClient.id}${source.id}`}
                       className={styles.exampleScreen}
                       onClick={() => {
                         if (isFocusedStream) {
                           setFocusedStream(null);
                         } else {
                           setFocusedStream({
-                            clientId: client.id,
+                            clientId: serverClient.id,
                             srcId: source.id,
                           });
                         }
                       }}
                     >
-                      <div className={styles.focusTint}>
-                        <Video
-                          className={`${styles.video} ${styles.preview}`}
-                          autoPlay
-                          paused={isFocusedStream}
-                          srcObject={source.stream}
-                        />
-                        {/* <VideocamOnIcon className={styles.focusCam}></VideocamOnIcon> */}
+                      <Video
+                        className={`${styles.video} ${styles.preview}`}
+                        autoPlay
+                        muted={clientId === serverClient.id}
+                        paused={isFocusedStream}
+                        srcObject={source.stream}
+                      />
+                      <div className={`${styles.tint} ${isFocusedStream ? styles.focusTint : styles.darkTint}`}>
+                        {isFocusedStream ? <VideocamOnIcon className={styles.focusCam}></VideocamOnIcon> : null}
+                        <p className={styles.nameTag}>{`${serverClient.name}'s ${SOURCE_NAMES[source.type]}`}</p>
                       </div>
                     </div>
                   );

@@ -6,6 +6,7 @@ export class NetworkClient {
     serverConn: RTCPeerConnection | null = null;
     candidates: RTCIceCandidate[] = [];
     id: string = "";
+    name: string = "";
     state: NETWORK_STATE = NETWORK_STATE.DISCONNECTED;
     coordinatorConnection: WebSocket | null = null;
     unassignedStreams: MediaStream[] = [];
@@ -25,6 +26,8 @@ export class NetworkClient {
         this.state = state;
         this.onNetworkStateChange(state);
     };
+
+    onIdChange = (id: string) => { };
 
     onServer = (resolve: () => void) => {
         if (!this.serverChannel) return;
@@ -63,7 +66,7 @@ export class NetworkClient {
                 }
             };
 
-            this.sendMessage(MESSAGE_TYPE.JOIN, { id: this.id });
+            this.sendMessage(MESSAGE_TYPE.JOIN, { id: this.id, name: this.name });
         });
 
         this.serverChannel.onmessage = async (event) => {
@@ -133,7 +136,7 @@ export class NetworkClient {
             } else if (data.type === MESSAGE_TYPE.JOIN) {
                 const message = data as Message<MESSAGE_TYPE.JOIN>;
 
-                this.clients.push({ id: message.data.id, name: "", sources: [], state: NETWORK_STATE.CONNECTED });
+                this.clients.push({ id: message.data.id, name: message.data.name, sources: [], state: NETWORK_STATE.CONNECTED });
                 if (message.data.id === this.id) {
                     this.setState(NETWORK_STATE.CONNECTED);
                     resolve();
@@ -230,10 +233,11 @@ export class NetworkClient {
         }
     };
 
-    connect = async (sessionId: string) => {
+    connect = async (sessionId: string, name: string) => {
         return new Promise<void>(async (resolve, reject) => {
             if (this.isStarted()) { return reject(new Error("Client already started")); }
             this.setState(NETWORK_STATE.COORDINATOR_CONNECTING);
+            this.name = name;
 
             //@ts-ignore
             this.coordinatorConnection = new WebSocket(process.env.REACT_APP_WS_URL!);
@@ -316,6 +320,7 @@ export class NetworkClient {
             if (!this.serverConn) return;
 
             this.id = message.data.id;
+            this.onIdChange(this.id);
             this.setState(NETWORK_STATE.CONNECTING);
 
             // Flush candidates

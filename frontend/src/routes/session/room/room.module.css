@@ -50,47 +50,49 @@
   width: 250px;
   background-color: var(--grey-half);
   overflow: hidden;
+  position: relative;
+  cursor: pointer;
+}
+
+.tint {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transition: all 0.2s;
+}
+
+.tint:hover {
+  background-color: var(--black-opac-soft);
+}
+
+.focusTint {
+  background-color: var(--black-opac-mid);
+}
+
+.focusTint:hover {
+  background-color: var(--black-opac);
+}
+
+.nameTag {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  padding: 5px;
+  border-radius: 5px;
+  background-color: var(--black-opac);
+  color: var(--white);
 }
 
 .focusCam {
   fill: var(--white);
   height: 40px;
   width: 40px;
-}
-
-.darkTint, .focusTint {
-  position: relative;
-  width: 250px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.darkTint video, .focusTint video {
-  width: 100%;
-  display: block;
-}
-
-.darkTint:before, .focusTint:before {
-  content: '';
   position: absolute;
-  background-color: var(--black-opac-soft);
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-}
-
-.focusTint:before {
-  background-color: var(--black-opac-mid);
-}
-
-.focusTint:hover:before {
-  background-color: var(--black-opac);
-}
-
-.darkTint:hover:before {
-  background-color: var(--black-opac-mid);
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .sessionHeader {

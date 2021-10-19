@@ -140,18 +140,21 @@ export class NetworkServer {
                     throw err;
                 }
             } else if (data.type === MESSAGE_TYPE.JOIN) {
+                const message = data as Message<MESSAGE_TYPE.JOIN>;
+
                 // Trigger join messages for new client
                 for (const serverClient of this.clients) {
                     if (serverClient.state !== NETWORK_STATE.CONNECTED) continue;
-                    this.sendMessage(MESSAGE_TYPE.JOIN, { id: serverClient.id }, client);
+                    this.sendMessage(MESSAGE_TYPE.JOIN, { id: serverClient.id, name: serverClient.name }, client);
                 }
 
                 client.state = NETWORK_STATE.CONNECTED;
+                client.name = message.data.name;
 
                 // Trigger join message for all clients
                 for (const serverClient of this.clients) {
                     if (serverClient.state !== NETWORK_STATE.CONNECTED) continue;
-                    this.sendMessage(MESSAGE_TYPE.JOIN, { id: client.id }, serverClient);
+                    this.sendMessage(MESSAGE_TYPE.JOIN, { id: client.id, name: client.name }, serverClient);
                 }
 
                 // Update tracks of new client

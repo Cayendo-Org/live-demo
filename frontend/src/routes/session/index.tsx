@@ -28,7 +28,7 @@ const Component: FunctionComponent<Props> = () => {
         });
     };
 
-    return (started && params.id) ? <Room sessionId={params.id} /> :
+    return (started && params.id && username) ? <Room sessionId={params.id} username={username} /> :
         <Settings
             username={username}
             setUsername={setUsername}
