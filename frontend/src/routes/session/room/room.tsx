@@ -18,6 +18,7 @@ import { ReactComponent as ScreenShareOnIcon } from "../../../assets/icons/scree
 import { ReactComponent as VideocamOffIcon } from "../../../assets/icons/videocam_off.svg";
 import { ReactComponent as VideocamOnIcon } from "../../../assets/icons/videocam_on.svg";
 import { ReactComponent as LargePreloader } from "../../../assets/images/preloader.svg";
+import { StopWatch } from "../../../components/stopWatch/stopWatch";
 import { Video } from "../../../components/video/video";
 import { DataBase } from "../../../database/database";
 import styles from "./room.module.css";
@@ -33,6 +34,7 @@ interface ClientStream {
 
 const Session: FunctionComponent<Props> = ({ sessionId }) => {
   DataBase.instance.initDB();
+  StopWatch.instance.initStopWatch();
   let recordingChunks: BlobPart[] = [];
   const history = useHistory();
   const [client] = useState(new NetworkClient());
@@ -95,6 +97,7 @@ const Session: FunctionComponent<Props> = ({ sessionId }) => {
           };
           let mediaRecorder = new MediaRecorder(mediaStream, options);
           mediaRecorder.start();
+          StopWatch.instance.start();
           setIsRecording(true);
 
           mediaRecorder.ondataavailable = (event) => {
@@ -106,7 +109,7 @@ const Session: FunctionComponent<Props> = ({ sessionId }) => {
             let blob = new Blob(recordingChunks, {
               type: "audio/ogg; codecs=opus",
             });
-            DataBase.instance.uploadVideo(new Date, "0:37", blob.size/1048576, clients.map((client)=>{return client.name}), blob)
+            DataBase.instance.uploadVideo(new Date, StopWatch.instance.getTime(), blob.size/1048576, clients.map((client)=>{return client.name}), blob)
             console.log("Recording saved");
             recordingChunks = [];
           };
@@ -126,10 +129,12 @@ const Session: FunctionComponent<Props> = ({ sessionId }) => {
       if (isRecordingPaused) {
         console.log("Recording paused");
         mediaRecorder.pause();
+        StopWatch.instance.pause();
         setIsRecordingPaused(false);
       } else {
         console.log("Recording resumed");
         mediaRecorder.resume();
+        StopWatch.instance.resume();
         setIsRecordingPaused(true);
       }
     } else {
