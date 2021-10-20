@@ -26,7 +26,7 @@
   },
   "scripts": {
     "start": "craco start",
-    "build": "craco build && rm -rf ../coordinator/build/build && mv build ../coordinator/build",
+    "build": "craco build",
     "test": "craco test"
   },
   "eslintConfig": {
