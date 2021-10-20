@@ -11,7 +11,7 @@ const Component: FunctionComponent<Props> = () => {
     const history = useHistory<{ isServer?: boolean; }>();
 
     const [server] = useState(new NetworkServer());
-    const [displayName, setDisplayName] = useSavedState("displayName", "");
+    const [displayName, setDisplayName] = useSavedState("", "displayName");
     const [started, setStarted] = useState(false);
 
     const start = () => {
