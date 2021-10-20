@@ -1,6 +1,7 @@
 import express from "express";
 import expressWs from "express-ws";
 import path from "path";
+import { v4 } from 'uuid';
 import WebSocket from 'ws';
 import { CoordinatorMessage, COORDINATOR_MESSAGE_TYPE } from "../../shared/types";
 
@@ -15,8 +16,8 @@ export interface Session {
 
 let sessions: Record<string, Session> = {};
 
-const createUuid = () => {
-  return String(Math.floor(Math.random() * 999999)).padStart(5, "0");
+const createSessionId = () => {
+  return String(Math.floor(Math.random() * 99999)).padStart(5, "0");
 };
 
 app.ws("/", function (ws, req) {
@@ -25,10 +26,10 @@ app.ws("/", function (ws, req) {
 
     // Create room
     if (data.type === COORDINATOR_MESSAGE_TYPE.SESSION_CREATE) {
-      let uuid = createUuid();
+      let uuid = data.data.id;
 
-      while (sessions[uuid]) {
-        uuid = createUuid();
+      while (uuid.length < 5 || sessions[uuid]) {
+        uuid = createSessionId();
       }
 
       // Setup server metadata
@@ -69,7 +70,7 @@ app.ws("/", function (ws, req) {
 
       // Assign one time connection id
       (ws as any).sessionId = data.data.id;
-      (ws as any).conId = String(Math.floor(Math.random() * 999999)).padStart(6, "0");
+      (ws as any).conId = v4();
       session.connectingClientMap[(ws as any).conId] = ws;
       data.id = (ws as any).conId;
       session.server.send(JSON.stringify(data));
@@ -126,5 +127,5 @@ app.use(express.static(path.join(__dirname, "./build")));
 app.get("*", (req, res) => { res.sendFile(path.join(__dirname, "./build/index.html")); });
 
 app.listen(port, () => {
-  console.log("server started at http://localhost:" + port);
+  console.log(`Coordinator started on port: ${port}`);
 });

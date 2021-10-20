@@ -1,5 +1,5 @@
 import localforage from "localforage";
-import { v4 as uuid_v4 } from "uuid";
+import { v4 } from "uuid";
 
 export interface METADATA {
   _uuid: string;
@@ -47,7 +47,7 @@ export class DataBase {
       ) {
         allMetaData.push(value);
       })
-      .then(function (ret) {})
+      .then(function (ret) { })
       .catch(function (err) {
         console.log(err);
       });
@@ -66,7 +66,7 @@ export class DataBase {
     people: string[],
     mp4: Blob
   ): Promise<void> {
-    let _uuid: string = uuid_v4();
+    let _uuid: string = v4();
     let metaData: METADATA = {
       _uuid: _uuid,
       date: date,

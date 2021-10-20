@@ -1,5 +1,3 @@
-backend/node_modules/
-frontend/node_modules/
+node_modules
 frontend/src/database/testvideos/
-backend/build/
-frontend/build/
+build

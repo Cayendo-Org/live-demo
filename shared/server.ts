@@ -12,7 +12,7 @@ export class NetworkServer {
     //#endregion
 
     //#region Public Methods
-    public async start() {
+    public async start(id: string = "") {
         return new Promise<string>(async (resolve, reject) => {
             if (this.isStarted()) { return reject(new Error("Server already started")); }
             this.setState(NETWORK_STATE.COORDINATOR_CONNECTING);
@@ -24,7 +24,6 @@ export class NetworkServer {
             this.coordinatorConnection.onmessage = this.onCoordinatorMessage;
 
             this.coordinatorConnection.onclose = () => {
-                console.log("Coordinator Closed");
                 if (this.state !== NETWORK_STATE.DISCONNECTED) {
                     reject();
                 }
@@ -36,10 +35,9 @@ export class NetworkServer {
             };
 
             this.coordinatorConnection.onopen = () => {
-                console.log("Coordinator Opened");
                 this.setState(NETWORK_STATE.COORDINATOR_CONNECTED);
                 this.setState(NETWORK_STATE.CONNECTING);
-                this.coordinatorSend(COORDINATOR_MESSAGE_TYPE.SESSION_CREATE, { id: "" });
+                this.coordinatorSend(COORDINATOR_MESSAGE_TYPE.SESSION_CREATE, { id: id });
             };
         });
     }
@@ -125,8 +123,6 @@ export class NetworkServer {
     //#region Private Callbacks
     private onClient(client: ServerClient) {
         client.dataChannel.addEventListener("open", (event) => {
-            console.log(`Server: Con: ${client.pc.connectionState}, ICE: ${client.pc.iceConnectionState}, COORDINAT: ${client.pc.signalingState}}`);
-
             client.pc.onicecandidate = ({ candidate }) => {
                 if (candidate) {
                     this.sendMessage(MESSAGE_TYPE.ICE, { candidate: candidate }, client);
@@ -135,7 +131,7 @@ export class NetworkServer {
 
             client.pc.onnegotiationneeded = async () => {
                 try {
-                    await client.pc.setLocalDescription();
+                    await client.pc.setLocalDescription(await client.pc.createOffer());
                     if (client.pc.localDescription) {
                         this.sendMessage(MESSAGE_TYPE.SDP, { description: client.pc.localDescription }, client);
                     }
@@ -185,14 +181,10 @@ export class NetworkServer {
                 try {
                     const description = message.data.description;
 
-                    console.log(`New remote SDP, Type: ${description.type}`);
-
                     await client.pc.setRemoteDescription(description);
                     if (description.type === "offer") {
-                        await client.pc.setLocalDescription();
+                        await client.pc.setLocalDescription(await client.pc.createAnswer());
                         if (client.pc.localDescription) {
-                            console.log(message.data);
-
                             this.sendMessage(MESSAGE_TYPE.SDP, { description: client.pc.localDescription }, client);
                         }
                     }
@@ -246,7 +238,6 @@ export class NetworkServer {
         };
 
         client.pc.ontrack = (event) => {
-            console.log("New Track", client);
             for (const clientSource of event.streams) {
                 let source = client.sources.find(source => source.id === clientSource.id);
                 if (!source) continue;
@@ -279,9 +270,9 @@ export class NetworkServer {
 
             pc.oniceconnectionstatechange = () => {
                 if (pc.iceConnectionState === "failed") {
+                    //@ts-ignore
                     pc.restartIce();
                 } else if (pc.iceConnectionState == 'disconnected') {
-                    console.log('Disconnected');
                     this.disconnectClient(client);
                 }
             };
@@ -301,7 +292,7 @@ export class NetworkServer {
 
             // Create answer
             await pc.setRemoteDescription(message.data.description);
-            await pc.setLocalDescription();
+            await pc.setLocalDescription(await client.pc.createAnswer());
             if (!pc.localDescription) return;
 
             this.coordinatorSend(COORDINATOR_MESSAGE_TYPE.CONNECT, { description: this.removeBandwidthRestriction(pc.localDescription), id: client.id }, message.id);
@@ -317,7 +308,6 @@ export class NetworkServer {
 
             for (let i = 0; i < this.clients.length; i++) {
                 if (this.clients[i].id === message.id) {
-                    console.log("ADDED");
                     await this.clients[i].pc.addIceCandidate(message.data.candidate);
                     break;
                 }

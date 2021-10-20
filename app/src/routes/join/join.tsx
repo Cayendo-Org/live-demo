@@ -9,12 +9,12 @@ const Join: FunctionComponent<Props> = () => {
 
   const onSubmit: ChangeEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
-    if (sessionId.length !== 6) { return; }
+    if (sessionId.length !== 5) { return; }
     history.push(`/session/${sessionId}`);
   };
 
   const onSessionIdChange: ChangeEventHandler<HTMLInputElement> = (event) => {
-    setSessionId(event.target.value.replaceAll(/\D/g, "").slice(0, 6));
+    setSessionId(event.target.value.replaceAll(/\D/g, "").slice(0, 5));
   };
 
   return (
@@ -25,7 +25,7 @@ const Join: FunctionComponent<Props> = () => {
         <label>
           <p title="Enter session code" className="input-label">Enter session code</p>
           <input
-            placeholder="Six digit session code"
+            placeholder="Five digit session code"
             className="input"
             value={sessionId}
             onChange={onSessionIdChange}

@@ -29,7 +29,6 @@ export class NetworkClient {
             this.coordinatorConnection.onmessage = this.onCoordinatorMessage;
 
             this.coordinatorConnection.onclose = () => {
-                console.log("Coordinator Closed");
                 if (this.state !== NETWORK_STATE.CONNECTING) {
                     this.disconnect();
                     reject();
@@ -42,8 +41,6 @@ export class NetworkClient {
             };
 
             this.coordinatorConnection.onopen = async () => {
-                console.log("Coordinator Opened");
-
                 this.setState(NETWORK_STATE.COORDINATOR_CONNECTED);
                 this.serverConn = new RTCPeerConnection(CONFIG);
                 this.serverChannel = this.serverConn.createDataChannel("general", { negotiated: true, id: 0 });
@@ -71,7 +68,6 @@ export class NetworkClient {
                 };
 
                 this.serverConn.ontrack = (event) => {
-                    console.log("new Stream", event);
                     // Push onto unassigned streams
                     let changed = false;
                     for (const serverStream of event.streams) {
@@ -93,12 +89,11 @@ export class NetworkClient {
                     if (this.serverConn.iceConnectionState === "failed") {
                         this.serverConn.restartIce();
                     } else if (this.serverConn.iceConnectionState == 'disconnected') {
-                        console.log('Disconnected');
                         this.disconnect();
                     }
                 };
 
-                await this.serverConn.setLocalDescription();
+                await this.serverConn.setLocalDescription(await this.serverConn.createOffer());
                 this.coordinatorSend(COORDINATOR_MESSAGE_TYPE.CONNECT, { description: this.removeBandwidthRestriction(this.serverConn.localDescription!), id: sessionId });
             };
         });
@@ -230,7 +225,6 @@ export class NetworkClient {
     }
 
     private addSource(source: Source) {
-        console.log("Source:", source);
         let client = this.clients.find(client => client.id === this.id)!;
         client.sources.push(source);
 
@@ -258,7 +252,6 @@ export class NetworkClient {
         let ind = client.sources.findIndex(item => item.id === source.id);
         if (ind === -1) return;
 
-        console.log("Remove Source:", source);
         source = client.sources[ind];
 
         if (source.stream) {
@@ -283,7 +276,6 @@ export class NetworkClient {
 
         let changed = false;
         for (const serverClient of this.clients) {
-            // console.log("STREAMS", serverClient, event.streams);
             if (serverClient.state !== NETWORK_STATE.CONNECTED) continue;
             for (const source of serverClient.sources) {
                 for (let i = this.unassignedStreams.length - 1; i > -1; i--) {
@@ -297,7 +289,6 @@ export class NetworkClient {
         }
 
         if (changed) {
-            console.log("STREAMS CHANGED");
             this.onClientsChanged(this.clients);
         }
     };
@@ -311,9 +302,7 @@ export class NetworkClient {
         let ignoreOffer = false;
 
         this.serverChannel.addEventListener("open", (event) => {
-            console.log("OPENED");
             if (!this.serverConn || !this.serverChannel) return;
-            console.log(`Client: Con: ${this.serverConn.connectionState}, ICE: ${this.serverConn.iceConnectionState}`);
 
             this.serverConn.onicecandidate = ({ candidate }) => {
                 if (candidate) {
@@ -323,10 +312,10 @@ export class NetworkClient {
 
             this.serverConn.onnegotiationneeded = async () => {
                 if (!this.serverConn || !this.serverChannel) return;
-                console.log("New SDP Needed");
+
                 try {
                     makingOffer = true;
-                    await this.serverConn.setLocalDescription();
+                    await this.serverConn.setLocalDescription(await this.serverConn.createOffer());
                     if (this.serverConn.localDescription) {
                         this.sendMessage(MESSAGE_TYPE.SDP, { description: this.serverConn.localDescription });
                     }
@@ -348,8 +337,6 @@ export class NetworkClient {
             if (data.type === MESSAGE_TYPE.ADD_SOURCE) {
                 const message = data as Message<MESSAGE_TYPE.ADD_SOURCE>;
 
-                console.log("Added Source:", message.data);
-
                 let client = this.clients.find(client => client.id === message.data.client);
                 if (!client) return;
 
@@ -366,8 +353,6 @@ export class NetworkClient {
                 this.assignStreams();
             } else if (data.type === MESSAGE_TYPE.REMOVE_SOURCE) {
                 const message = data as Message<MESSAGE_TYPE.REMOVE_SOURCE>;
-
-                console.log("Removed Source:", message.data);
 
                 let client = this.clients.find(client => client.id === message.data.client);
                 if (!client) return;
@@ -391,12 +376,10 @@ export class NetworkClient {
                         return;
                     }
 
-                    console.log(`New remote SDP, Type: ${description.type}`);
-
                     await this.serverConn.setRemoteDescription(description);
 
                     if (description.type === "offer") {
-                        await this.serverConn.setLocalDescription();
+                        await this.serverConn.setLocalDescription(await this.serverConn.createAnswer());
 
                         if (this.serverConn.localDescription) {
                             this.sendMessage(MESSAGE_TYPE.SDP, { description: this.serverConn.localDescription });
@@ -423,12 +406,10 @@ export class NetworkClient {
                     this.setState(NETWORK_STATE.CONNECTED);
                     resolve();
                 }
-                console.log("Client joined");
             } else if (data.type === MESSAGE_TYPE.LEAVE) {
                 const message = data as Message<MESSAGE_TYPE.LEAVE>;
 
                 if (!message.data.id) {
-                    console.log("Server stopped");
                     this.disconnect();
                     return;
                 }
@@ -436,7 +417,6 @@ export class NetworkClient {
                 let ind = this.clients.findIndex(client => client.id === message.data.id);
                 if (ind !== -1) {
                     this.clients.splice(ind, 1);
-                    console.log("Client Left");
                     this.onClientsChanged(this.clients);
                 }
             }
@@ -445,7 +425,6 @@ export class NetworkClient {
 
     private onCoordinatorMessage = async (event: MessageEvent) => {
         const data = JSON.parse(event.data);
-        console.log(data);
 
         if (data.type === COORDINATOR_MESSAGE_TYPE.ICE) {
             const message = data as CoordinatorMessage<COORDINATOR_MESSAGE_TYPE.ICE>;

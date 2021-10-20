@@ -1,5 +1,5 @@
 {
   "scripts": {
-    "start": "cd backend/build/ && node index.js"
+    "start": "cd coordinator/build/ && node index.js"
   }
 }

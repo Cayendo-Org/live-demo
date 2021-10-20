@@ -40,6 +40,7 @@ const Session: FunctionComponent<Props> = ({ sessionId, username, stopServer }) 
   let recordingChunks: BlobPart[] = [];
 
   const [client] = useState(new NetworkClient());
+  const [audioOutput] = useState(new Audio());
   const [isRecording, setIsRecording] = useState(false);
   const [isRecordingPaused, setIsRecordingPaused] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(false);
@@ -93,6 +94,30 @@ const Session: FunctionComponent<Props> = ({ sessionId, username, stopServer }) 
       client.disconnect();
     };
   }, [client, sessionId, username]);
+
+  useEffect(() => {
+    let ac = new AudioContext();
+
+    let sources = clients.flatMap(serverClient => {
+      if (serverClient.id === client.id) return [];
+
+      let output = [];
+      for (const source of serverClient.sources) {
+        if (source.stream && source.type === SOURCE_TYPE.MICROPHONE) {
+          output.push(ac.createMediaStreamSource(source.stream));
+        }
+      }
+      return output;
+    });
+
+    let dest = ac.createMediaStreamDestination();
+    for (const source of sources) {
+      source.connect(dest);
+    }
+
+    audioOutput.srcObject = dest.stream;
+    audioOutput.play();
+  }, [clients, audioOutput, client]);
 
   const getStream = (feed: ClientStream): MediaStream | null => {
     const client = clients.find((client) => client.id === feed.clientId);
@@ -376,7 +401,7 @@ const Session: FunctionComponent<Props> = ({ sessionId, username, stopServer }) 
                       <Video
                         className={`${styles.video} ${styles.preview}`}
                         autoPlay
-                        muted={clientId === serverClient.id}
+                        muted={true}
                         paused={isFocusedStream}
                         srcObject={source.stream}
                       />

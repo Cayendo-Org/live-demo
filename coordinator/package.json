@@ -1,29 +1,30 @@
 {
-  "name": "backend",
+  "name": "coordinator",
   "version": "1.0.0",
-  "description": "",
+  "description": "Live demo coordinator",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack && rm -rf ./build/node_modules/ && cp -rf ./node_modules/ ./build/",
-    "buildall": "npm run build && cd ../frontend/ && npm run build",
+    "buildall": "npm run build && cd ../app/ && npm run build",
     "start": "webpack && cd ./build/ && node index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/node": "^16.7.13",
     "express": "^4.17.1",
     "express-ws": "^5.0.2",
-    "ts-loader": "^9.2.5",
-    "webpack-node-externals": "^3.0.0"
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@types/express": "^4.17.13",
     "@types/express-ws": "^3.0.1",
+    "@types/node": "^16.7.13",
+    "@types/uuid": "^8.3.1",
+    "ts-loader": "^9.2.5",
     "typescript": "^4.4.2",
     "webpack": "^5.52.0",
-    "webpack-cli": "^4.9.0"
+    "webpack-cli": "^4.9.0",
+    "webpack-node-externals": "^3.0.0"
   }
 }
