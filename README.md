@@ -1,4 +1,4 @@
-# <img src="frontend/public/favicon.ico"  width="25"/> Live Demo | [record-together.net](https://record-together.azurewebsites.net/)
+# <img src="app/public/favicon.ico"  width="25"/> Live Demo | [record-together.net](https://record-together.azurewebsites.net/)
 
 
 ## What is Live Demo?
@@ -16,14 +16,14 @@ Live Demo allows anyone to quickly host a peer-to-peer session that anyone can j
 ## Commands
 
 ```bash
-- Frontend -
+- App/Frontend -
 npm run start # Run the frontend with auto reloader
 npm run build # Build the frontend
 
-- Backend -
+- Coordinator/Backend -
 npm run start # Start up the backend server
-npm run build # Build the backend
-npm run buildall # Build both the front and backend
+npm run dev # Build the backend
+npm run deploy # Build both the front and backend
 ```
 
 *Note that you will need to have the latest version of [Node.js](https://nodejs.org) installed.*

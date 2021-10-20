@@ -4,10 +4,9 @@
   "description": "Live demo coordinator",
   "main": "index.js",
   "scripts": {
-    "build": "webpack",
-    "deploy": "cd ../app/ && npm run build && cd ../coordinator/ && npm run build && cp -rf ../app/build ./build && cp -rf ./node_modules ./build && cp -rf ./package.json ./build",
+    "deploy": "cd ../app/ && npm run build && cd ../coordinator/ && webpack && cp -rf ../app/build ./build && cp -rf ./package.json ./build",
     "start": "node index.js",
-    "dev": "npm run build && cd ./build/ && node index.js"
+    "dev": "webpack && cd ./build/ && node index.js"
   },
   "keywords": [],
   "author": "",

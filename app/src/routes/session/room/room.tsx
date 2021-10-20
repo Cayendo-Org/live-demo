@@ -61,7 +61,6 @@ const Session: FunctionComponent<Props> = ({ sessionId, username, stopServer }) 
   useEffect(() => {
     if (!client.isStarted()) {
       client.onClientsChanged = (clients) => {
-        console.log("Clients:", clients);
         setClients([...clients]);
       };
 
