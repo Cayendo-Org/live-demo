@@ -4,7 +4,7 @@
   "description": "Live demo coordinator",
   "main": "index.js",
   "scripts": {
-    "deploy": "cd ../app/ && npm run build && cd ../coordinator/ && webpack && cp -rf ../app/build ./build && cp -rf ./package.json ./build",
+    "deploy": "cd ../app/ && npm run build && cd ../coordinator/ && webpack",
     "start": "node index.js",
     "dev": "webpack && cd ./build/ && node index.js"
   },
@@ -22,6 +22,7 @@
     "@types/node": "^16.7.13",
     "@types/uuid": "^8.3.1",
     "clean-webpack-plugin": "^4.0.0",
+    "copy-webpack-plugin": "^9.0.1",
     "ts-loader": "^9.2.5",
     "typescript": "^4.4.2",
     "webpack": "^5.52.0",
