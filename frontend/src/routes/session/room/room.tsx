@@ -1,6 +1,6 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import { NetworkClient } from "../../../../../shared/client";
-import { Client, NETWORK_STATE, Source, SOURCE_NAMES } from "../../../../../shared/types";
+import { Client, NETWORK_STATE, Source, SOURCE_NAMES, SOURCE_TYPE } from "../../../../../shared/types";
 import { ReactComponent as DrawIcon } from "../../../assets/icons/brush.svg";
 import { ReactComponent as EndCallIcon } from "../../../assets/icons/call_end.svg";
 import { ReactComponent as MessageIcon } from "../../../assets/icons/chat.svg";
@@ -26,6 +26,7 @@ import styles from "./room.module.css";
 interface Props {
   sessionId: string;
   username: string;
+  stopServer: () => void;
 }
 
 interface ClientStream {
@@ -33,7 +34,7 @@ interface ClientStream {
   srcId: string;
 }
 
-const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
+const Session: FunctionComponent<Props> = ({ sessionId, username, stopServer }) => {
   DataBase.instance.initDB();
   StopWatch.instance.initStopWatch();
   let recordingChunks: BlobPart[] = [];
@@ -42,13 +43,16 @@ const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isRecordingPaused, setIsRecordingPaused] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(false);
+  const [isStartingCamera, setIsStartingCamera] = useState(false);
   const [isMicrophoneOn, setIsMicrophoneOn] = useState(false);
+  const [isStartingMicrophone, setIsStartingMicrophone] = useState(false);
   const [isScreenShareOn, setIsScreenShareOn] = useState(false);
+  const [isStartingScreenShare, setIsStartingScreenShare] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder>();
   const [clients, setClients] = useState<Client[]>([]);
   const [networkState, setNetworkState] = useState<NETWORK_STATE>(
-    NETWORK_STATE.DISCONNECTED
+    NETWORK_STATE.CONNECTING
   );
   const [focusedStream, setFocusedStream] = useState<ClientStream | null>(null);
   const [clientId, setClientId] = useState<string>("");
@@ -72,6 +76,8 @@ const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
       client.connect(sessionId, username).then(() => {
         console.log("Connected");
         copyPageUrl();
+      }).catch(() => {
+        console.log("Failed to connect");
       });
     }
 
@@ -161,27 +167,29 @@ const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
     if (isCameraOn) {
       setIsCameraOn(false);
       client.stopCamera();
-    } else {
-      setIsCameraOn(true);
-
+    } else if (!isStartingCamera) {
+      setIsStartingCamera(true);
       client.startCamera().then((src: Source) => {
+        setIsCameraOn(true);
         if (!focusedStream) {
           setFocusedStream({
             clientId: client.id,
             srcId: src.id,
           });
         }
-      });
+      }).finally(() => { setIsStartingCamera(false); });
     }
   };
 
   const toggleMic = () => {
     if (isMicrophoneOn) {
-      // client.endMic();
       setIsMicrophoneOn(false);
-    } else {
-      // client.startMic();
-      setIsMicrophoneOn(true);
+      client.stopMicrophone();
+    } else if (!isStartingMicrophone) {
+      setIsStartingMicrophone(true);
+      client.startMicrophone().then((src: Source) => {
+        setIsMicrophoneOn(true);
+      }).finally(() => { setIsStartingMicrophone(false); });
     }
   };
 
@@ -189,15 +197,15 @@ const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
     if (isScreenShareOn) {
       client.stopScreenShare();
       setIsScreenShareOn(false);
-    } else {
-      setIsScreenShareOn(true);
-
+    } else if (!isStartingScreenShare) {
+      setIsStartingScreenShare(true);
       client.startScreenShare().then((src: Source) => {
+        setIsScreenShareOn(true);
         setFocusedStream({
           clientId: client.id,
           srcId: src.id,
         });
-      });
+      }).finally(() => { setIsStartingScreenShare(false); });
     }
   };
 
@@ -213,6 +221,7 @@ const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
 
   const disconnect = () => {
     client.disconnect();
+    stopServer();
     // history.push("/session-end");
   };
 
@@ -338,12 +347,15 @@ const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
           <div className={styles.sideWrapper}>
             <div className={styles.sideView}>
               {clients.flatMap((serverClient) => {
-                return serverClient.sources.map((source) => {
+                let output = [];
+
+                for (const source of serverClient.sources) {
                   const isFocusedStream =
                     !!focusedStream &&
                     serverClient.id === focusedStream.clientId &&
                     source.id === focusedStream.srcId;
-                  return (
+                  if (source.type === SOURCE_TYPE.MICROPHONE) continue;
+                  output.push(
                     <div
                       title={
                         isFocusedStream ? `Remove from focus` : `Click to focus`
@@ -374,7 +386,9 @@ const Session: FunctionComponent<Props> = ({ sessionId, username }) => {
                       </div>
                     </div>
                   );
-                });
+                }
+
+                return output;
               })}
             </div>
           </div>

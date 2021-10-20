@@ -2,20 +2,20 @@ import { ChangeEventHandler, FunctionComponent } from "react";
 import { SiteNav } from "../../../components/navbar/navbar";
 
 interface Props {
-  username: string;
-  setUsername: (username: string) => void;
+  displayName: string;
+  setDisplayName: (username: string) => void;
   start: () => void;
   isServer: boolean;
 }
-const Join: FunctionComponent<Props> = ({ username, setUsername, start, isServer }) => {
+const Join: FunctionComponent<Props> = ({ displayName, setDisplayName, start, isServer }) => {
   const onSubmit: ChangeEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
-    if (username.length === 0) { return; }
+    if (displayName.length === 0) { return; }
     start();
   };
 
-  const onSessionIdChange: ChangeEventHandler<HTMLInputElement> = (event) => {
-    setUsername(event.target.value.slice(0, 200));
+  const onUsernameChange: ChangeEventHandler<HTMLInputElement> = (event) => {
+    setDisplayName(event.target.value.slice(0, 200));
   };
 
   return (
@@ -28,8 +28,8 @@ const Join: FunctionComponent<Props> = ({ username, setUsername, start, isServer
           <input
             placeholder="Display name (visible to other users)"
             className="input"
-            value={username}
-            onChange={onSessionIdChange}
+            value={displayName}
+            onChange={onUsernameChange}
             autoFocus
           />
         </label>

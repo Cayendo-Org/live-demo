@@ -88,11 +88,13 @@ export interface SourceSyncClient {
 //#region Source
 export const enum SOURCE_TYPE {
     CAMERA,
+    MICROPHONE,
     SCREEN_SHARE
 }
 
 export const SOURCE_NAMES = {
     [SOURCE_TYPE.CAMERA]: "camera",
+    [SOURCE_TYPE.MICROPHONE]: "mic",
     [SOURCE_TYPE.SCREEN_SHARE]: "screen",
 };
 

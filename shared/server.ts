@@ -44,6 +44,24 @@ export class NetworkServer {
         });
     }
 
+    public stop() {
+        if (this.coordinatorConnection && !this.coordinatorConnection.CLOSED)
+            this.coordinatorConnection.close();
+
+        if (this.state !== NETWORK_STATE.CONNECTED) return;
+
+        this.sendMessage(MESSAGE_TYPE.LEAVE, { id: "" });
+
+        // Cleanup
+        for (const client of this.clients) {
+            client.pc.close();
+        }
+
+        this.clients.splice(0, this.clients.length);
+
+        this.setState(NETWORK_STATE.DISCONNECTED);
+    }
+
     public isStarted = () => {
         return this.state !== NETWORK_STATE.DISCONNECTED;
     };
@@ -63,11 +81,12 @@ export class NetworkServer {
     private sendMessage<K extends MESSAGE_TYPE>(type: K, data: MessageOptions[K], client: ServerClient | null = null) {
         if (!client) {
             for (const serverClient of this.clients) {
-                if (serverClient.state !== NETWORK_STATE.CONNECTED) continue;
+                if (serverClient.state !== NETWORK_STATE.CONNECTED || serverClient.dataChannel.readyState !== "open") continue;
                 serverClient.dataChannel.send(JSON.stringify({ type: type, data: data }));
             }
         } else {
-            client.dataChannel.send(JSON.stringify({ type: type, data: data }));
+            if (client.dataChannel.readyState === "open")
+                client.dataChannel.send(JSON.stringify({ type: type, data: data }));
         }
     }
 

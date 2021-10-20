@@ -20,7 +20,7 @@ export const Video: FunctionComponent<Props> = ({ srcObject, paused, onPlay, ...
             if (srcObject)
                 element.srcObject = srcObject;
             if (paused !== undefined && !paused && element.paused) {
-                element.play();
+                element.play().catch(() => { });
             }
         }
     }, [srcObject, paused]);

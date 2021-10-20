@@ -1,6 +1,7 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router";
 import { NetworkServer } from "../../../../shared/server";
+import { useSavedState } from "../../hooks/savedState";
 import Room from "./room/room";
 import Settings from "./settings/settings";
 
@@ -9,13 +10,12 @@ const Component: FunctionComponent<Props> = () => {
     const params = useParams<{ id: string; }>();
     const history = useHistory<{ isServer?: boolean; }>();
 
-    // const [isServer] = useState(!params.id);
-    const [server] = useState(() => { console.log("CREATED NetworkServer"); return new NetworkServer(); });
-    const [username, setUsername] = useState("");
+    const [server] = useState(new NetworkServer());
+    const [displayName, setDisplayName] = useSavedState("displayName", "");
     const [started, setStarted] = useState(false);
 
     const start = () => {
-        if (!username) return;
+        if (!displayName) return;
         if (params.id && (!history.location.state || !history.location.state.isServer)) return setStarted(true);
         if (server.isStarted()) return;
 
@@ -34,10 +34,33 @@ const Component: FunctionComponent<Props> = () => {
         }
     }, [history, params]);
 
-    return (started && params.id && username) ? <Room sessionId={params.id} username={username} /> :
+    useEffect(() => {
+        let unloadListener = () => { server.stop(); };
+        let f5Listener = (e: KeyboardEvent) => { if (e.code === "f5") server.stop(); };
+
+        window.addEventListener('beforeunload', unloadListener);
+        window.addEventListener('keyup', f5Listener);
+
+        return () => {
+            window.removeEventListener('beforeunload', unloadListener);
+            window.removeEventListener('keyup', f5Listener);
+            server.stop();
+        };
+    }, [server]);
+
+    const stopServer = () => {
+        server.stop();
+    };
+
+    return (started && params.id && displayName) ?
+        <Room
+            sessionId={params.id}
+            username={displayName}
+            stopServer={stopServer}
+        /> :
         <Settings
-            username={username}
-            setUsername={setUsername}
+            displayName={displayName}
+            setDisplayName={setDisplayName}
             start={start}
             isServer={history.location.state ? !!history.location.state.isServer : false}
         />;

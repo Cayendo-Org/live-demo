@@ -30,7 +30,8 @@ export class NetworkClient {
 
             this.coordinatorConnection.onclose = () => {
                 console.log("Coordinator Closed");
-                if (this.state !== NETWORK_STATE.CONNECTED) {
+                if (this.state !== NETWORK_STATE.CONNECTING) {
+                    this.disconnect();
                     reject();
                 }
             };
@@ -86,6 +87,17 @@ export class NetworkClient {
                     }
                 };
 
+                this.serverConn.oniceconnectionstatechange = () => {
+                    if (!this.serverConn) return;
+
+                    if (this.serverConn.iceConnectionState === "failed") {
+                        this.serverConn.restartIce();
+                    } else if (this.serverConn.iceConnectionState == 'disconnected') {
+                        console.log('Disconnected');
+                        this.disconnect();
+                    }
+                };
+
                 await this.serverConn.setLocalDescription();
                 this.coordinatorSend(COORDINATOR_MESSAGE_TYPE.CONNECT, { description: this.removeBandwidthRestriction(this.serverConn.localDescription!), id: sessionId });
             };
@@ -93,17 +105,25 @@ export class NetworkClient {
     };
 
     public disconnect() {
-        if (!this.serverConn || this.state !== NETWORK_STATE.CONNECTED) return;
+        if (this.coordinatorConnection && !this.coordinatorConnection.CLOSED)
+            this.coordinatorConnection.close();
 
-        let client = this.clients.find(client => client.id === this.id)!;
-        if (client.sources.find(source => source.type === SOURCE_TYPE.CAMERA)) throw new Error("Camera already started");
-        this.stopCamera();
-        this.stopScreenShare();
+        if (!this.serverConn) return;
 
-        this.sendMessage(MESSAGE_TYPE.LEAVE, { id: this.id });
-        this.setState(NETWORK_STATE.DISCONNECTED);
+        if (this.state === NETWORK_STATE.CONNECTED) {
+            this.stopCamera();
+            this.stopMicrophone();
+            this.stopScreenShare();
+
+            this.sendMessage(MESSAGE_TYPE.LEAVE, { id: this.id });
+        }
+
+        // Cleanup
         this.serverConn.close();
         this.serverConn = null;
+        this.clients.splice(0, this.clients.length);
+
+        this.setState(NETWORK_STATE.DISCONNECTED);
 
         this.onClientsChanged(this.clients);
     }
@@ -114,7 +134,7 @@ export class NetworkClient {
         let client = this.clients.find(client => client.id === this.id)!;
         if (client.sources.find(source => source.type === SOURCE_TYPE.CAMERA)) throw new Error("Camera already started");
 
-        let captureStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        let captureStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
 
         // Add Source
         let source: Source = { type: SOURCE_TYPE.CAMERA, id: captureStream.id, stream: captureStream };
@@ -128,6 +148,28 @@ export class NetworkClient {
         let camera = client.sources.find(source => source.type === SOURCE_TYPE.CAMERA);
         if (!camera) return;
         this.removeSource(camera);
+    };
+
+    public startMicrophone = async () => {
+        // Sanity Checks
+        if (this.state !== NETWORK_STATE.CONNECTED) throw new Error("Not Connected");
+        let client = this.clients.find(client => client.id === this.id)!;
+        if (client.sources.find(source => source.type === SOURCE_TYPE.MICROPHONE)) throw new Error("Microphone already started");
+
+        let captureStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+
+        // Add Source
+        let source: Source = { type: SOURCE_TYPE.MICROPHONE, id: captureStream.id, stream: captureStream };
+        this.addSource(source);
+        return source;
+    };
+
+    public stopMicrophone = () => {
+        if (this.state !== NETWORK_STATE.CONNECTED) throw new Error("Not Connected");
+        let client = this.clients.find(client => client.id === this.id)!;
+        let microphone = client.sources.find(source => source.type === SOURCE_TYPE.MICROPHONE);
+        if (!microphone) return;
+        this.removeSource(microphone);
     };
 
     public startScreenShare = async () => {
@@ -171,7 +213,8 @@ export class NetworkClient {
     }
 
     private sendMessage<K extends MESSAGE_TYPE>(type: K, data: MessageOptions[K]) {
-        this.serverChannel?.send(JSON.stringify({ type: type, data: data }));
+        if (this.serverChannel?.readyState === "open")
+            this.serverChannel?.send(JSON.stringify({ type: type, data: data }));
     }
 
     private setState = (state: NETWORK_STATE) => {
@@ -220,7 +263,8 @@ export class NetworkClient {
 
         if (source.stream) {
             for (const track of source.stream.getTracks()) {
-                track.stop();
+                if (track.readyState == 'live')
+                    track.stop();
             }
         }
 
@@ -382,6 +426,12 @@ export class NetworkClient {
                 console.log("Client joined");
             } else if (data.type === MESSAGE_TYPE.LEAVE) {
                 const message = data as Message<MESSAGE_TYPE.LEAVE>;
+
+                if (!message.data.id) {
+                    console.log("Server stopped");
+                    this.disconnect();
+                    return;
+                }
 
                 let ind = this.clients.findIndex(client => client.id === message.data.id);
                 if (ind !== -1) {
