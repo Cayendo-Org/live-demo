@@ -237,8 +237,16 @@ export class NetworkClient {
         });
 
         if (source.stream) {
+            let remaining = 0;
             for (const track of source.stream.getTracks()) {
+                remaining++;
                 this.serverConn?.addTrack(track, source.stream);
+                track.onended = () => {
+                    remaining--;
+                    if (remaining === 0) {
+                        this.removeSource(source);
+                    }
+                };
             }
         }
 
@@ -363,6 +371,7 @@ export class NetworkClient {
                 if (oldSource === -1) return;
 
                 client.sources.splice(oldSource, 1);
+                this.onClientsChanged(this.clients);
             } else if (data.type === MESSAGE_TYPE.SDP) {
                 const message = data as Message<MESSAGE_TYPE.SDP>;
 
