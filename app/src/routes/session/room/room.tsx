@@ -56,16 +56,11 @@ const Session: FunctionComponent<Props> = ({ sessionId, username, stopServer }) 
     NETWORK_STATE.CONNECTING
   );
   const [focusedStream, setFocusedStream] = useState<ClientStream | null>(null);
-  const [clientId, setClientId] = useState<string>("");
 
   useEffect(() => {
     if (!client.isStarted()) {
       client.onClientsChanged = (clients) => {
         setClients([...clients]);
-      };
-
-      client.onIdChange = (id) => {
-        setClientId(id);
       };
 
       client.onNetworkStateChange = (state) => {
@@ -96,27 +91,31 @@ const Session: FunctionComponent<Props> = ({ sessionId, username, stopServer }) 
 
   useEffect(() => {
     let ac = new AudioContext();
+    let dest = ac.createMediaStreamDestination();
 
-    let sources = clients.flatMap(serverClient => {
-      if (serverClient.id === client.id) return [];
+    for (const serverClient of clients) {
+      if (serverClient.id === client.id) continue;
 
-      let output = [];
       for (const source of serverClient.sources) {
-        if (source.stream && source.type === SOURCE_TYPE.MICROPHONE) {
-          output.push(ac.createMediaStreamSource(source.stream));
+        if (source.stream && (
+          source.type === SOURCE_TYPE.MICROPHONE ||
+          (focusedStream && focusedStream.clientId === serverClient.id && focusedStream.srcId === source.id)
+        )) {
+          let audio = new Audio();
+          audio.srcObject = source.stream;
+
+          let src = ac.createMediaStreamSource(source.stream);
+          let gainNode = ac.createGain();
+          gainNode.gain.value = 0.5;
+          src.connect(gainNode);
+          gainNode.connect(dest);
         }
       }
-      return output;
-    });
-
-    let dest = ac.createMediaStreamDestination();
-    for (const source of sources) {
-      source.connect(dest);
     }
 
     audioOutput.srcObject = dest.stream;
-    audioOutput.play();
-  }, [clients, audioOutput, client]);
+    audioOutput.autoplay = true;
+  }, [clients, audioOutput, client, focusedStream]);
 
   const getStream = (feed: ClientStream): MediaStream | null => {
     const client = clients.find((client) => client.id === feed.clientId);
@@ -264,7 +263,6 @@ const Session: FunctionComponent<Props> = ({ sessionId, username, stopServer }) 
     return <Ended />;
   }
 
-
   if (networkState !== NETWORK_STATE.CONNECTED) {
     return <div className={styles.preloaderCenter}>
       <LargePreloader />
@@ -342,7 +340,7 @@ const Session: FunctionComponent<Props> = ({ sessionId, username, stopServer }) 
           <div className={styles.exampleCanvas}>
             {focusedStream ? (
               <Video
-                muted={clientId === focusedStream.clientId}
+                muted={true}
                 className={styles.video}
                 autoPlay
                 srcObject={getStream(focusedStream)}
