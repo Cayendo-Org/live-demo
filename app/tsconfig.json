@@ -21,5 +21,8 @@
     "../shared/utils.ts",
     "../shared/client.ts",
     "../shared/server.ts"
+  ],
+  "types": [
+    "dom-webcodecs"
   ]
 }

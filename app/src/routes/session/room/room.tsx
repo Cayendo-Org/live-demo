@@ -17,7 +17,7 @@ import { ReactComponent as ScreenShareOnIcon } from "../../../assets/icons/scree
 import { ReactComponent as VideocamOffIcon } from "../../../assets/icons/videocam_off.svg";
 import { ReactComponent as VideocamOnIcon } from "../../../assets/icons/videocam_on.svg";
 import { ReactComponent as LargePreloader } from "../../../assets/images/preloader.svg";
-import { StopWatch } from "../../../components/stopWatch/stopWatch";
+import { Canvas } from "../../../components/canvas/canvas";
 import { Video } from "../../../components/video/video";
 import { DataBase } from "../../../database/database";
 import Ended from "../ended/ended";
@@ -36,13 +36,11 @@ interface ClientStream {
 
 const Session: FunctionComponent<Props> = ({ sessionId, username, stopServer }) => {
   DataBase.instance.initDB();
-  StopWatch.instance.initStopWatch();
-  let recordingChunks: BlobPart[] = [];
 
   const [client] = useState(new NetworkClient());
   const [audioOutput] = useState(new Audio());
   const [isRecording, setIsRecording] = useState(false);
-  const [isRecordingPaused, setIsRecordingPaused] = useState(false);
+  const [isRecordingPaused, setIsRecordingPaused] = useState(true);
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isStartingCamera, setIsStartingCamera] = useState(false);
   const [isMicrophoneOn, setIsMicrophoneOn] = useState(false);
@@ -50,7 +48,6 @@ const Session: FunctionComponent<Props> = ({ sessionId, username, stopServer }) 
   const [isScreenShareOn, setIsScreenShareOn] = useState(false);
   const [isStartingScreenShare, setIsStartingScreenShare] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder>();
   const [clients, setClients] = useState<Client[]>([]);
   const [networkState, setNetworkState] = useState<NETWORK_STATE>(
     NETWORK_STATE.CONNECTING
@@ -125,65 +122,6 @@ const Session: FunctionComponent<Props> = ({ sessionId, username, stopServer }) 
     if (!source) return null;
 
     return source.stream;
-  };
-
-  const toggleRecording = () => {
-    if (isRecording && mediaRecorder) {
-      console.log("Recording stopped");
-      mediaRecorder.stop();
-      setIsRecording(false);
-    } else {
-      if (focusedStream) {
-        let mediaStream = getStream(focusedStream);
-        if (mediaStream) {
-          console.log("Recording started");
-          var options = {
-            // audioBitsPerSecond: 128000,
-            // videoBitsPerSecond: 3500000,
-            mimeType: "video/webm; codecs=vp9",
-          };
-          let mediaRecorder = new MediaRecorder(mediaStream, options);
-          mediaRecorder.start();
-          StopWatch.instance.start();
-          setIsRecording(true);
-
-          mediaRecorder.ondataavailable = (event) => {
-            recordingChunks.push(event.data);
-          };
-
-          mediaRecorder.onstop = (event) => {
-            console.log("Recording stopped");
-            let blob = new Blob(recordingChunks, {
-              type: "audio/ogg; codecs=opus",
-            });
-            DataBase.instance.uploadVideo(new Date(), StopWatch.instance.getTime(), blob.size / 1048576, clients.map((client) => { return client.name; }), blob);
-            console.log("Recording saved");
-            recordingChunks = [];
-          };
-          setMediaRecorder(mediaRecorder);
-        }
-      }
-    }
-    setIsRecordingPaused(true);
-  };
-
-  const toggleRecordingState = () => {
-    if (isRecording && mediaRecorder) {
-      if (isRecordingPaused) {
-        console.log("Recording paused");
-        mediaRecorder.pause();
-        StopWatch.instance.pause();
-        setIsRecordingPaused(false);
-      } else {
-        console.log("Recording resumed");
-        mediaRecorder.resume();
-        StopWatch.instance.resume();
-        setIsRecordingPaused(true);
-      }
-    } else {
-      setIsRecordingPaused(true);
-      console.log("Cannot pause/play since recording is not active.");
-    }
   };
 
   const toggleCamera = () => {
@@ -276,7 +214,9 @@ const Session: FunctionComponent<Props> = ({ sessionId, username, stopServer }) 
           <button
             title="Toggle recording"
             className={`fab-btn`}
-            onClick={toggleRecording}
+            onClick={() => {
+              setIsRecording(!isRecording)
+            }}
           >
             <RecordIcon className={isRecording ? styles.recordOn : ""} />
           </button>
@@ -284,7 +224,7 @@ const Session: FunctionComponent<Props> = ({ sessionId, username, stopServer }) 
             <button
               title="Toggle play and pause"
               className="fab-btn"
-              onClick={toggleRecordingState}
+              onClick={() => setIsRecordingPaused(!isRecordingPaused)}
             >
               {isRecordingPaused ? <PauseIcon /> : <PlayIcon />}
             </button>
@@ -338,14 +278,13 @@ const Session: FunctionComponent<Props> = ({ sessionId, username, stopServer }) 
       <div className={styles.mainView}>
         <div className={styles.exampleCanvasWrapper}>
           <div className={styles.exampleCanvas}>
-            {focusedStream ? (
-              <Video
-                muted={true}
-                className={styles.video}
-                autoPlay
-                srcObject={getStream(focusedStream)}
-              />
-            ) : null}
+            <Canvas
+              srcObject={focusedStream ? getStream(focusedStream) : null}
+              isRecording={isRecording}
+              isRecordingPaused={isRecordingPaused}
+              setRecordingPaused={setIsRecordingPaused}
+              clientNames={clients.map((client)=>client.name)}
+            />
           </div>
         </div>
       </div>

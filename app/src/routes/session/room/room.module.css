@@ -21,6 +21,9 @@
   min-width: 400px;
   background-color: var(--grey-half);
   border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 /* SIDE NAV (RIGHT) */

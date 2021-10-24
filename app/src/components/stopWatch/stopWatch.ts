@@ -11,7 +11,6 @@ export class StopWatch {
     var minutes = Math.floor(this._millisecondsEllapsed / 60000);
     var seconds = ((this._millisecondsEllapsed % 60000) / 1000).toFixed(0);
     this.resume();
-    console.log(this._millisecondsEllapsed, minutes + ":" + (parseInt(seconds) < 10 ? "0" : "") + seconds)
     return minutes + ":" + (parseInt(seconds) < 10 ? "0" : "") + seconds;
   }
 
