@@ -105,6 +105,8 @@ export interface SourceDescription {
 
 export interface Source extends SourceDescription {
     stream: MediaStream | null;
+    volume: number;
+    muted: boolean;
 }
 //#endregion
 

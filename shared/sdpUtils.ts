@@ -111,7 +111,7 @@ export const preferBitRate = (sdp: string, bitrate: number, mediaType: string) =
 // Add an a=fmtp: x-google-min-bitrate=kbps line, if videoSendInitialBitrate
 // is specified. We'll also add a x-google-min-bitrate value, since the max
 // must be >= the min.
-export const maybeSetVideoSendInitialBitRate = (sdp: string, params: { videoSendInitialBitrate?: number; videoSendBitrate?: number; }) => {
+export const maybeSetVideoSendInitialBitRate = (sdp: string, params: { videoSendInitialBitrate: number; videoSendBitrate?: number; }) => {
     let initialBitrate = params.videoSendInitialBitrate;
     if (!initialBitrate) {
         return sdp;

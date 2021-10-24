@@ -132,7 +132,7 @@ export class NetworkClient {
         let captureStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
 
         // Add Source
-        let source: Source = { type: SOURCE_TYPE.CAMERA, id: captureStream.id, stream: captureStream };
+        let source: Source = { type: SOURCE_TYPE.CAMERA, id: captureStream.id, stream: captureStream, volume: 1, muted: false };
         this.addSource(source);
         return source;
     };
@@ -154,7 +154,7 @@ export class NetworkClient {
         let captureStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
 
         // Add Source
-        let source: Source = { type: SOURCE_TYPE.MICROPHONE, id: captureStream.id, stream: captureStream };
+        let source: Source = { type: SOURCE_TYPE.MICROPHONE, id: captureStream.id, stream: captureStream, volume: 1, muted: false };
         this.addSource(source);
         return source;
     };
@@ -175,7 +175,7 @@ export class NetworkClient {
 
 
         let captureStream = await navigator.mediaDevices.getDisplayMedia({
-            video: true, audio: {
+            video: { frameRate: 144 }, audio: {
                 echoCancellation: false,
                 //@ts-ignore
                 autoGainControl: false,
@@ -184,7 +184,7 @@ export class NetworkClient {
         });
 
         // Add Source
-        let source: Source = { type: SOURCE_TYPE.SCREEN_SHARE, id: captureStream.id, stream: captureStream };
+        let source: Source = { type: SOURCE_TYPE.SCREEN_SHARE, id: captureStream.id, stream: captureStream, volume: 1, muted: false };
         this.addSource(source);
         return source;
     };
@@ -229,7 +229,7 @@ export class NetworkClient {
         return {
             type: description.type,
             sdp: maybeSetVideoSendInitialBitRate(
-                setMaxAverageBitrate(description.sdp),
+                setMaxAverageBitrate(description.sdp!),
                 { videoSendInitialBitrate: 8000 }
             )
         } as RTCSessionDescription;
@@ -366,7 +366,9 @@ export class NetworkClient {
                 client.sources.push({
                     id: message.data.source.id,
                     type: message.data.source.type,
-                    stream: null
+                    stream: null,
+                    volume: 1,
+                    muted: false
                 });
 
                 this.assignStreams();

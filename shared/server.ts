@@ -98,7 +98,7 @@ export class NetworkServer {
         return {
             type: description.type,
             sdp: maybeSetVideoSendInitialBitRate(
-                setMaxAverageBitrate(description.sdp),
+                setMaxAverageBitrate(description.sdp!),
                 { videoSendInitialBitrate: 8000 }
             )
         } as RTCSessionDescription;
@@ -158,7 +158,9 @@ export class NetworkServer {
                 client.sources.push({
                     id: message.data.source.id,
                     type: message.data.source.type,
-                    stream: null
+                    stream: null,
+                    volume: 1,
+                    muted: false
                 });
 
                 this.sendMessage(MESSAGE_TYPE.ADD_SOURCE, {

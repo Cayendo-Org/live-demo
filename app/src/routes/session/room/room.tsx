@@ -100,13 +100,13 @@ const Session: FunctionComponent<Props> = ({ sessionId, username, stopServer }) 
         if (source.stream && (
           source.type === SOURCE_TYPE.MICROPHONE ||
           (focusedStream && focusedStream.clientId === serverClient.id && focusedStream.srcId === source.id)
-        ) && source.stream.getAudioTracks().length > 0) {
+        ) && source.stream.getAudioTracks().length > 0 && !source.muted) {
           let audio = new Audio();
           audio.srcObject = source.stream;
 
           let src = ac.createMediaStreamSource(source.stream);
           let gainNode = ac.createGain();
-          gainNode.gain.value = 1;
+          gainNode.gain.value = source.volume;
           src.connect(gainNode);
 
           gainNode.connect(ac.destination);
