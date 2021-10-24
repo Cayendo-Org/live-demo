@@ -93,7 +93,7 @@ export class NetworkClient {
                     }
                 };
 
-                await this.serverConn.setLocalDescription(await this.serverConn.createOffer());
+                await this.serverConn.setLocalDescription(this.removeBandwidthRestriction(await this.serverConn.createOffer() as any));
                 this.coordinatorSend(COORDINATOR_MESSAGE_TYPE.CONNECT, { description: this.removeBandwidthRestriction(this.serverConn.localDescription!), id: sessionId });
             };
         });
@@ -390,10 +390,10 @@ export class NetworkClient {
                     await this.serverConn.setRemoteDescription(description);
 
                     if (description.type === "offer") {
-                        await this.serverConn.setLocalDescription(await this.serverConn.createAnswer());
+                        await this.serverConn.setLocalDescription(this.removeBandwidthRestriction(await this.serverConn.createAnswer() as any));
 
                         if (this.serverConn.localDescription) {
-                            this.sendMessage(MESSAGE_TYPE.SDP, { description: this.serverConn.localDescription });
+                            this.sendMessage(MESSAGE_TYPE.SDP, { description: this.removeBandwidthRestriction(this.serverConn.localDescription) });
                         }
                     }
                 } catch (err) {

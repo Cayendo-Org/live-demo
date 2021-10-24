@@ -133,9 +133,9 @@ export class NetworkServer {
 
             client.pc.onnegotiationneeded = async () => {
                 try {
-                    await client.pc.setLocalDescription(await client.pc.createOffer());
+                    await client.pc.setLocalDescription(this.removeBandwidthRestriction(await client.pc.createOffer() as any));
                     if (client.pc.localDescription) {
-                        this.sendMessage(MESSAGE_TYPE.SDP, { description: client.pc.localDescription }, client);
+                        this.sendMessage(MESSAGE_TYPE.SDP, { description: this.removeBandwidthRestriction(client.pc.localDescription) }, client);
                     }
                 } catch (err) {
                     console.error(err);
@@ -185,9 +185,9 @@ export class NetworkServer {
 
                     await client.pc.setRemoteDescription(description);
                     if (description.type === "offer") {
-                        await client.pc.setLocalDescription(await client.pc.createAnswer());
+                        await client.pc.setLocalDescription(this.removeBandwidthRestriction(await client.pc.createAnswer() as any));
                         if (client.pc.localDescription) {
-                            this.sendMessage(MESSAGE_TYPE.SDP, { description: client.pc.localDescription }, client);
+                            this.sendMessage(MESSAGE_TYPE.SDP, { description: this.removeBandwidthRestriction(client.pc.localDescription) }, client);
                         }
                     }
                 } catch (err) {
@@ -294,7 +294,7 @@ export class NetworkServer {
 
             // Create answer
             await pc.setRemoteDescription(message.data.description);
-            await pc.setLocalDescription(await client.pc.createAnswer());
+            await pc.setLocalDescription(this.removeBandwidthRestriction(await client.pc.createAnswer() as any));
             if (!pc.localDescription) return;
 
             this.coordinatorSend(COORDINATOR_MESSAGE_TYPE.CONNECT, { description: this.removeBandwidthRestriction(pc.localDescription), id: client.id }, message.id);
