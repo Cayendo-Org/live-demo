@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" height="300" viewBox="-50 -50 400 400" style="margin: auto; width: 150px;">
+  <defs>
+    <style>
+      #Group_261 {
+          animation: fadeInUp 0.3s ease;
+      }
+
+      @keyframes fadeInUp {
+          from {
+              opacity: 0;
+          }
+
+          to {
+              opacity: 1;
+          }
+      }
+
+      #mid g {
+        animation: dropIn 2s cubic-bezier(0.5, -0.3, .7, 1) infinite;
+        animation-direction: alternate;
+        animation-delay: calc(var(--order) * 0.2s);
+      }
+
+      @keyframes dropIn {
+        15% {
+            transform: translateY(0)
+        }
+
+        70% {
+            transform: translateY(50%)
+        }
+      }
+
+      .cls-1 {
+        fill: url(#linear-gradient);
+      }
+
+      .cls-2 {
+        fill: url(#linear-gradient-2);
+      }
+
+      .cls-3 {
+        fill: url(#linear-gradient-3);
+      }
+
+      .cls-4 {
+        fill: url(#linear-gradient-4);
+      }
+    </style>
+    <linearGradient id="linear-gradient" x1="0.043" y1="0.08" x2="0.97" y2="0.785" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#8c9ffd"/>
+      <stop offset="1" stop-color="#036dbc"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient-2" x1="0.143" y1="0.129" x2="0.793" y2="0.901" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#54b50e"/>
+      <stop offset="1" stop-color="#127d10"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient-3" x1="0.143" y1="0.129" x2="0.793" y2="0.901" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#ffd200"/>
+      <stop offset="1" stop-color="#f18f09"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient-4" x1="0.143" y1="0.129" x2="0.793" y2="0.901" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#e15113"/>
+      <stop offset="1" stop-color="#c03307"/>
+    </linearGradient>
+  </defs>
+  <g id="Group_261" data-name="Group 261" transform="translate(-1524.707 -14)">
+    <path id="Path_415" data-name="Path 415" class="cls-1" d="M283.33,68.743V204.5a20.082,20.082,0,0,1-20.024,20.024H63.071L3,284.6V24.29A20.082,20.082,0,0,1,23.024,4.267H186.816a60.16,60.16,0,0,0-3.6,20.024,59.99,59.99,0,0,0,60.071,60.071A59.549,59.549,0,0,0,283.33,68.743Z" transform="translate(1521.707 29.403)"/>
+    <g id="mid">
+      <g style="--order: 2;">
+        <circle id="Ellipse_85" data-name="Ellipse 85" class="cls-2" cx="39.753" cy="39.753" r="39.753" transform="translate(1725.237 14)"/>
+      </g>
+      <g style="--order: 1.5;">
+        <circle id="Ellipse_84" data-name="Ellipse 84" class="cls-3" cx="39.753" cy="39.753" r="39.753" transform="translate(1725.237 14)"/>
+      </g>
+      <g style="--order: 1;">
+        <circle id="Ellipse_83" data-name="Ellipse 83" class="cls-4" cx="39.753" cy="39.753" r="39.753" transform="translate(1725.237 14)"/>
+      </g>
+    </g>
+  </g>
+</svg>
