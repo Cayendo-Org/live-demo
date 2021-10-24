@@ -226,12 +226,10 @@ export class NetworkClient {
     };
 
     private removeBandwidthRestriction(description: RTCSessionDescription): RTCSessionDescription {
-        console.log("SDP", description.sdp);
         return {
             type: description.type,
             sdp: description.sdp
-                .replace(/a=mid:audio\r\n/g, `a=mid:audio\r\nb=AS:${256}\r\n`)
-                .replace(/a=mid:video\r\n/g, `a=mid:video\r\nb=AS:${10000}\r\n`)
+                .replace('useinbandfec=1', 'useinbandfec=1; stereo=1; maxaveragebitrate=510000')
         } as RTCSessionDescription;
     }
 
@@ -396,7 +394,6 @@ export class NetworkClient {
                         return;
                     }
 
-                    console.log("SDP", description.sdp);
                     await this.serverConn.setRemoteDescription(description);
 
                     if (description.type === "offer") {
@@ -470,7 +467,6 @@ export class NetworkClient {
 
             this.candidates.splice(0, this.candidates.length);
 
-            console.log("SDP", message.data.description.sdp);
             await this.serverConn.setRemoteDescription(message.data.description);
         }
     };

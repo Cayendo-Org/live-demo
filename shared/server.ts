@@ -97,8 +97,7 @@ export class NetworkServer {
         return {
             type: description.type,
             sdp: description.sdp
-                .replace(/a=mid:audio\r\n/g, `a=mid:audio\r\nb=AS:${256}\r\n`)
-                .replace(/a=mid:video\r\n/g, `a=mid:video\r\nb=AS:${10000}\r\n`)
+                .replace('useinbandfec=1', 'useinbandfec=1; stereo=1; maxaveragebitrate=510000')
         } as RTCSessionDescription;
     }
 
@@ -183,7 +182,6 @@ export class NetworkServer {
                 try {
                     const description = message.data.description;
 
-                    console.log("SDP", description.sdp);
                     await client.pc.setRemoteDescription(description);
                     if (description.type === "offer") {
                         await client.pc.setLocalDescription(this.removeBandwidthRestriction(await client.pc.createAnswer() as any));
@@ -294,7 +292,6 @@ export class NetworkServer {
             };
 
             // Create answer
-            console.log("SDP", message.data.description.sdp);
             await pc.setRemoteDescription(message.data.description);
             await pc.setLocalDescription(this.removeBandwidthRestriction(await client.pc.createAnswer() as any));
             if (!pc.localDescription) return;
