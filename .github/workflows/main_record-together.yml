@@ -82,4 +82,4 @@ jobs:
           app-name: 'record-together'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_1078B4E1E24C4818A8A47D8F40549552 }}
-          package: coordinator/build
+          package: ./coordinator/build/
