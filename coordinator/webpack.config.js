@@ -12,6 +12,7 @@ module.exports = {
       patterns: [
         { from: "../app/build/", to: "./build/" },
         { from: "./package.json", to: "./package.json" },
+        { from: "./package-lock.json", to: "./package-lock.json" },
       ],
     }),
     new CleanWebpackPlugin(),

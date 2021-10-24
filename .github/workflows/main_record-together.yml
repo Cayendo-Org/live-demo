@@ -72,8 +72,12 @@ jobs:
 
       - name: npm install and build
         run: |
-          cd ./app/ && npm install && cd ../coordinator/ && npm install
+          cd ./app/
+          npm install
+          cd ../coordinator/
+          npm install
           npm run deploy
+          cd ..
           
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
@@ -82,4 +86,4 @@ jobs:
           app-name: 'record-together'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_1078B4E1E24C4818A8A47D8F40549552 }}
-          package: coordinator/build
+          package: ./coordinator/build/
