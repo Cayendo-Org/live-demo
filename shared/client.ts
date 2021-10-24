@@ -24,7 +24,7 @@ export class NetworkClient {
             this.name = name;
 
             //@ts-ignore
-            this.coordinatorConnection = new WebSocket(process.env.REACT_APP_WS_URL!);
+            this.coordinatorConnection = new WebSocket(process.env.REACT_APP_COORDINATOR_URL!);
 
             this.coordinatorConnection.onmessage = this.onCoordinatorMessage;
 
@@ -410,11 +410,15 @@ export class NetworkClient {
             } else if (data.type === MESSAGE_TYPE.JOIN) {
                 const message = data as Message<MESSAGE_TYPE.JOIN>;
 
+                let ind = this.clients.findIndex(client => client.id === message.data.id);
+                if (ind !== -1) return;
+
                 this.clients.push({ id: message.data.id, name: message.data.name, sources: [], state: NETWORK_STATE.CONNECTED });
                 if (message.data.id === this.id) {
                     this.setState(NETWORK_STATE.CONNECTED);
                     resolve();
                 }
+                this.onClientsChanged(this.clients);
             } else if (data.type === MESSAGE_TYPE.LEAVE) {
                 const message = data as Message<MESSAGE_TYPE.LEAVE>;
 
@@ -424,10 +428,11 @@ export class NetworkClient {
                 }
 
                 let ind = this.clients.findIndex(client => client.id === message.data.id);
-                if (ind !== -1) {
-                    this.clients.splice(ind, 1);
-                    this.onClientsChanged(this.clients);
-                }
+                if (ind === -1) return;
+
+                this.clients.splice(ind, 1);
+                this.onClientsChanged(this.clients);
+
             }
         };
     };

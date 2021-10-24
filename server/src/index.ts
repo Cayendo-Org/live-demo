@@ -1,3 +1,4 @@
+import commandLineArgs from "command-line-args";
 import { RTCPeerConnection } from "wrtc";
 import WebSocket from 'ws';
 import { NetworkServer } from "../../shared/server";
@@ -7,12 +8,16 @@ global.WebSocket = WebSocket as any;
 global.RTCPeerConnection = RTCPeerConnection;
 //#endregion
 
-process.env.REACT_APP_WS_URL = "wss://record-together.azurewebsites.net";
+let options = commandLineArgs([
+    { name: 'coordinator', alias: 'c', type: String, defaultValue: "wss://record-together.azurewebsites.net" },
+    { name: 'sessionid', alias: 's', type: String, defaultValue: "", defaultOption: true },
+]);
+process.env.REACT_APP_COORDINATOR_URL = options.coordinator;
 
 let server = new NetworkServer();
 
 console.log("Starting...");
-server.start(process.argv.length > 2 ? process.argv[2] : "").then((code) => {
+server.start(options.sessionid).then((code) => {
     console.log(`Session code: ${code}`);
 }).catch(() => {
     console.log("Failed to start server");

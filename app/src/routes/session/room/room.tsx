@@ -100,7 +100,7 @@ const Session: FunctionComponent<Props> = ({ sessionId, username, stopServer }) 
         if (source.stream && (
           source.type === SOURCE_TYPE.MICROPHONE ||
           (focusedStream && focusedStream.clientId === serverClient.id && focusedStream.srcId === source.id)
-        )) {
+        ) && source.stream.getAudioTracks().length > 0) {
           let audio = new Audio();
           audio.srcObject = source.stream;
 
