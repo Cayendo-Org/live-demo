@@ -173,7 +173,15 @@ export class NetworkClient {
         let client = this.clients.find(client => client.id === this.id)!;
         if (client.sources.find(source => source.type === SOURCE_TYPE.SCREEN_SHARE)) throw new Error("Screen share already started");
 
-        let captureStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+
+        let captureStream = await navigator.mediaDevices.getDisplayMedia({
+            video: true, audio: {
+                echoCancellation: false,
+                //@ts-ignore
+                autoGainControl: false,
+                noiseSuppression: false,
+            }
+        });
 
         // Add Source
         let source: Source = { type: SOURCE_TYPE.SCREEN_SHARE, id: captureStream.id, stream: captureStream };
@@ -218,6 +226,7 @@ export class NetworkClient {
     };
 
     private removeBandwidthRestriction(description: RTCSessionDescription): RTCSessionDescription {
+        console.log("SDP", description.sdp);
         return {
             type: description.type,
             sdp: description.sdp
@@ -387,6 +396,7 @@ export class NetworkClient {
                         return;
                     }
 
+                    console.log("SDP", description.sdp);
                     await this.serverConn.setRemoteDescription(description);
 
                     if (description.type === "offer") {
@@ -460,6 +470,7 @@ export class NetworkClient {
 
             this.candidates.splice(0, this.candidates.length);
 
+            console.log("SDP", message.data.description.sdp);
             await this.serverConn.setRemoteDescription(message.data.description);
         }
     };

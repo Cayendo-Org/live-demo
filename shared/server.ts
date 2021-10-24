@@ -183,6 +183,7 @@ export class NetworkServer {
                 try {
                     const description = message.data.description;
 
+                    console.log("SDP", description.sdp);
                     await client.pc.setRemoteDescription(description);
                     if (description.type === "offer") {
                         await client.pc.setLocalDescription(this.removeBandwidthRestriction(await client.pc.createAnswer() as any));
@@ -293,6 +294,7 @@ export class NetworkServer {
             };
 
             // Create answer
+            console.log("SDP", message.data.description.sdp);
             await pc.setRemoteDescription(message.data.description);
             await pc.setLocalDescription(this.removeBandwidthRestriction(await client.pc.createAnswer() as any));
             if (!pc.localDescription) return;
