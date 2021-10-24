@@ -220,7 +220,9 @@ export class NetworkClient {
     private removeBandwidthRestriction(description: RTCSessionDescription): RTCSessionDescription {
         return {
             type: description.type,
-            sdp: description.sdp.replace(/b=AS:.*\r\n/, '').replace(/b=TIAS:.*\r\n/, ''),
+            sdp: description.sdp
+                .replace(/a=mid:audio\r\n/g, `a=mid:audio\r\nb=AS:${256}\r\n`)
+                .replace(/a=mid:video\r\n/g, `a=mid:video\r\nb=AS:${10000}\r\n`)
         } as RTCSessionDescription;
     }
 
