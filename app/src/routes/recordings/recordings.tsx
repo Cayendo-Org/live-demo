@@ -7,7 +7,7 @@ import { SiteNav } from "../../components/navbar/navbar";
 import { DataBase, METADATA } from "../../database/database";
 import styles from "./recordings.module.css";
 
-interface Props {}
+interface Props { }
 const Recordings: FunctionComponent<Props> = () => {
   DataBase.instance.initDB();
   const history = useHistory();
@@ -28,19 +28,19 @@ const Recordings: FunctionComponent<Props> = () => {
     history.push(`/session`);
   };
 
-  const uploadVideo = (
-    date: Date,
-    duration: string,
-    size: number,
-    people: string[],
-    mp4: Blob
-  ) => {
-    DataBase.instance
-      .uploadVideo(date, duration, size, people, mp4)
-      .then(() => {
-        loadVideos();
-      });
-  };
+  // const uploadVideo = (
+  //   date: Date,
+  //   duration: string,
+  //   size: number,
+  //   people: string[],
+  //   mp4: Blob
+  // ) => {
+  //   DataBase.instance
+  //     .uploadVideo(date, duration, size, people, mp4)
+  //     .then(() => {
+  //       loadVideos();
+  //     });
+  // };
 
   const getVideo = (metaData: METADATA) => {
     let _uuid = metaData._uuid;
