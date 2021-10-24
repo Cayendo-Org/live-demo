@@ -106,7 +106,7 @@ const Session: FunctionComponent<Props> = ({ sessionId, username, stopServer }) 
 
           let src = ac.createMediaStreamSource(source.stream);
           let gainNode = ac.createGain();
-          gainNode.gain.value = 0.5;
+          gainNode.gain.value = 1;
           src.connect(gainNode);
           gainNode.connect(dest);
         }
