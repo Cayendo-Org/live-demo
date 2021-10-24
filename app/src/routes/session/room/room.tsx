@@ -91,8 +91,8 @@ const Session: FunctionComponent<Props> = ({ sessionId, username, stopServer }) 
 
   useEffect(() => {
     let ac = new AudioContext();
-    let dest = ac.createMediaStreamDestination();
-
+    // let dest = ac.createMediaStreamDestination();
+    let connections: GainNode[] = [];
     for (const serverClient of clients) {
       if (serverClient.id === client.id) continue;
 
@@ -108,13 +108,20 @@ const Session: FunctionComponent<Props> = ({ sessionId, username, stopServer }) 
           let gainNode = ac.createGain();
           gainNode.gain.value = 1;
           src.connect(gainNode);
-          gainNode.connect(dest);
+
+          gainNode.connect(ac.destination);
+          connections.push(gainNode);
         }
       }
     }
 
-    audioOutput.srcObject = dest.stream;
-    audioOutput.autoplay = true;
+    // audioOutput.srcObject = dest.stream;
+    // audioOutput.autoplay = true;
+    return () => {
+      for (const conn of connections) {
+        conn.disconnect();
+      }
+    };
   }, [clients, audioOutput, client, focusedStream]);
 
   const getStream = (feed: ClientStream): MediaStream | null => {
