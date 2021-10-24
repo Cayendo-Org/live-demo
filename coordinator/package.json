@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "deploy": "cd ../app/ && npm run build && cd ../coordinator/ && webpack",
-    "start": "npm install && node index.js",
+    "start": "npm cache clean --force && npm install && node index.js",
     "dev": "webpack && cd ./build/ && node index.js"
   },
   "keywords": [],
