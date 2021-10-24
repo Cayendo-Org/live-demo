@@ -1,3 +1,4 @@
+import { maybeSetVideoSendInitialBitRate, setMaxAverageBitrate } from "./sdpUtils";
 import { Client, CONFIG, CoordinatorMessage, CoordinatorMessageOptions, COORDINATOR_MESSAGE_TYPE, Message, MessageOptions, MESSAGE_TYPE, NETWORK_STATE, ServerClient } from "./types";
 
 export class NetworkServer {
@@ -93,11 +94,13 @@ export class NetworkServer {
         this.onNetworkStateChange(state);
     };
 
-    private removeBandwidthRestriction(description: RTCSessionDescription): RTCSessionDescription {
+    private removeBandwidthRestriction(description: RTCSessionDescription | RTCSessionDescriptionInit): RTCSessionDescription {
         return {
             type: description.type,
-            sdp: description.sdp
-                .replace('useinbandfec=1', 'useinbandfec=1; stereo=1; maxaveragebitrate=510000')
+            sdp: maybeSetVideoSendInitialBitRate(
+                setMaxAverageBitrate(description.sdp),
+                { videoSendInitialBitrate: 8000 }
+            )
         } as RTCSessionDescription;
     }
 
@@ -132,7 +135,7 @@ export class NetworkServer {
 
             client.pc.onnegotiationneeded = async () => {
                 try {
-                    await client.pc.setLocalDescription(this.removeBandwidthRestriction(await client.pc.createOffer() as any));
+                    await client.pc.setLocalDescription(this.removeBandwidthRestriction(await client.pc.createOffer()));
                     if (client.pc.localDescription) {
                         this.sendMessage(MESSAGE_TYPE.SDP, { description: this.removeBandwidthRestriction(client.pc.localDescription) }, client);
                     }
@@ -184,7 +187,7 @@ export class NetworkServer {
 
                     await client.pc.setRemoteDescription(description);
                     if (description.type === "offer") {
-                        await client.pc.setLocalDescription(this.removeBandwidthRestriction(await client.pc.createAnswer() as any));
+                        await client.pc.setLocalDescription(this.removeBandwidthRestriction(await client.pc.createAnswer()));
                         if (client.pc.localDescription) {
                             this.sendMessage(MESSAGE_TYPE.SDP, { description: this.removeBandwidthRestriction(client.pc.localDescription) }, client);
                         }
@@ -293,7 +296,7 @@ export class NetworkServer {
 
             // Create answer
             await pc.setRemoteDescription(message.data.description);
-            await pc.setLocalDescription(this.removeBandwidthRestriction(await client.pc.createAnswer() as any));
+            await pc.setLocalDescription(this.removeBandwidthRestriction(await client.pc.createAnswer()));
             if (!pc.localDescription) return;
 
             this.coordinatorSend(COORDINATOR_MESSAGE_TYPE.CONNECT, { description: this.removeBandwidthRestriction(pc.localDescription), id: client.id }, message.id);

@@ -1,5 +1,5 @@
+import { maybeSetVideoSendInitialBitRate, setMaxAverageBitrate } from "./sdpUtils";
 import { Client, CONFIG, CoordinatorMessage, CoordinatorMessageOptions, COORDINATOR_MESSAGE_TYPE, Message, MessageOptions, MESSAGE_TYPE, NETWORK_STATE, Source, SOURCE_TYPE } from "./types";
-
 export class NetworkClient {
     //#region Public Attributes
     public id: string = "";
@@ -93,7 +93,7 @@ export class NetworkClient {
                     }
                 };
 
-                await this.serverConn.setLocalDescription(this.removeBandwidthRestriction(await this.serverConn.createOffer() as any));
+                await this.serverConn.setLocalDescription(this.removeBandwidthRestriction(await this.serverConn.createOffer()));
                 this.coordinatorSend(COORDINATOR_MESSAGE_TYPE.CONNECT, { description: this.removeBandwidthRestriction(this.serverConn.localDescription!), id: sessionId });
             };
         });
@@ -225,11 +225,13 @@ export class NetworkClient {
         this.onNetworkStateChange(state);
     };
 
-    private removeBandwidthRestriction(description: RTCSessionDescription): RTCSessionDescription {
+    private removeBandwidthRestriction(description: RTCSessionDescription | RTCSessionDescriptionInit): RTCSessionDescription {
         return {
             type: description.type,
-            sdp: description.sdp
-                .replace('useinbandfec=1', 'useinbandfec=1; stereo=1; maxaveragebitrate=510000')
+            sdp: maybeSetVideoSendInitialBitRate(
+                setMaxAverageBitrate(description.sdp),
+                { videoSendInitialBitrate: 8000 }
+            )
         } as RTCSessionDescription;
     }
 
@@ -397,7 +399,7 @@ export class NetworkClient {
                     await this.serverConn.setRemoteDescription(description);
 
                     if (description.type === "offer") {
-                        await this.serverConn.setLocalDescription(this.removeBandwidthRestriction(await this.serverConn.createAnswer() as any));
+                        await this.serverConn.setLocalDescription(this.removeBandwidthRestriction(await this.serverConn.createAnswer()));
 
                         if (this.serverConn.localDescription) {
                             this.sendMessage(MESSAGE_TYPE.SDP, { description: this.removeBandwidthRestriction(this.serverConn.localDescription) });
